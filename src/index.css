@@ -1,0 +1,188 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-bg: #EEF4F7;
+    --color-bg-alt: #F4F8FA;
+    --color-surface: #FFFFFF;
+    --color-surface-alt: #F7FAFB;
+    --color-divider: #E3EBEF;
+    --color-border: #D9E2E7;
+
+    --color-text-primary: #0E1B2C;
+    --color-text-secondary: #4A5C6E;
+    --color-text-tertiary: #7A8A98;
+    --color-text-on-dark: #FFFFFF;
+    --color-text-on-dark-subtle: rgba(255, 255, 255, 0.78);
+    --color-text-on-dark-muted: rgba(255, 255, 255, 0.55);
+
+    --color-primary: #0A2540;
+    --color-primary-hover: #0F2C4D;
+    --color-accent: #1FA59B;
+    --color-accent-soft: #A4E4DA;
+
+    --color-hero-from: #0A2540;
+    --color-hero-mid: #163559;
+    --color-hero-to: #1FA59B;
+
+    --color-glass-fill: rgba(255, 255, 255, 0.10);
+    --color-glass-border: rgba(255, 255, 255, 0.18);
+
+    --color-success: #1FA59B;
+    --color-warning: #E0A23A;
+    --color-danger: #D04E5C;
+    --color-pulse-red: #FF6E7A;
+
+    --color-tab-bar-bg: #FFFFFF;
+    --color-tab-icon-active: #0A2540;
+    --color-tab-icon-inactive: #7A8A98;
+    --color-tab-active-bg: #E9EFF3;
+
+    --color-avatar-from: #0A2540;
+    --color-avatar-to: #1FA59B;
+
+    --shadow-card: 0 6px 16px rgba(10, 37, 64, 0.06);
+  }
+
+  .dark {
+    --color-bg: #06121F;
+    --color-bg-alt: #13283C;
+    --color-surface: #0E1F30;
+    --color-surface-alt: #13283C;
+    --color-divider: #1E3247;
+    --color-border: #264159;
+
+    --color-text-primary: #F4F8FA;
+    --color-text-secondary: #A8B6C2;
+    --color-text-tertiary: #7A8A98;
+
+    --color-primary: #1FA59B;
+    --color-primary-hover: #3DBDB0;
+    --color-accent: #3DBDB0;
+    --color-accent-soft: #6CD3C5;
+
+    --color-glass-fill: rgba(255, 255, 255, 0.08);
+    --color-glass-border: rgba(255, 255, 255, 0.14);
+
+    --color-tab-bar-bg: #0E1F30;
+    --color-tab-icon-active: #3DBDB0;
+    --color-tab-icon-inactive: #7A8A98;
+    --color-tab-active-bg: rgba(31, 165, 155, 0.14);
+
+    --shadow-card: 0 6px 16px rgba(0, 0, 0, 0.4);
+  }
+
+  html, body, #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background-color: var(--color-bg);
+    color: var(--color-text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  * { box-sizing: border-box; }
+
+  button { font-family: inherit; }
+
+  input, textarea {
+    font-family: inherit;
+  }
+}
+
+@layer components {
+  .surface {
+    background-color: var(--color-surface);
+  }
+  .surface-alt {
+    background-color: var(--color-surface-alt);
+  }
+  .text-primary {
+    color: var(--color-text-primary);
+  }
+  .text-secondary {
+    color: var(--color-text-secondary);
+  }
+  .text-tertiary {
+    color: var(--color-text-tertiary);
+  }
+  .border-divider {
+    border-color: var(--color-divider);
+  }
+  .bg-app {
+    background-color: var(--color-bg);
+  }
+  .bg-app-alt {
+    background-color: var(--color-bg-alt);
+  }
+
+  .card-base {
+    background-color: var(--color-surface);
+    border-radius: 24px;
+    padding: 20px;
+    box-shadow: var(--shadow-card);
+  }
+
+  .hero-gradient {
+    background-image: linear-gradient(135deg,
+      var(--color-hero-from) 0%,
+      var(--color-hero-mid) 50%,
+      var(--color-hero-to) 100%);
+  }
+
+  .avatar-gradient {
+    background-image: linear-gradient(135deg,
+      var(--color-avatar-from) 0%,
+      var(--color-avatar-to) 100%);
+  }
+
+  .eyebrow {
+    font-size: 11px;
+    line-height: 16px;
+    letter-spacing: 1.2px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+}
+
+@layer utilities {
+  .pulse-ring::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    border: 1.5px solid var(--color-pulse-red);
+    animation: pulseRing 1.6s ease-out infinite;
+  }
+}
+
+/* ECG line scroll — moves the wave horizontally for a heart-monitor effect */
+@keyframes ecgScroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.ecg-scroll {
+  animation: ecgScroll 8s linear infinite;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ecg-scroll {
+    animation: none;
+  }
+}
