@@ -3,13 +3,13 @@ import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
 import { EcgWaveform } from '@/components/Waveform';
 import { Icon } from '@/components/Icon';
-import {
-  mockAtlasStats,
-  mockAtlasFeatured,
-  mockAtlasContinue,
-} from '@/mocks/mockData';
 import type { AtlasCase } from '@/types';
 import { cn } from '@/utils/format';
+
+
+const mockAtlasStats = { accuracyPct: 0, solved: 0 };
+const mockAtlasFeatured = { id: 'featured', title: 'ECG Atlas — Coming Soon', description: 'Case library will be available soon.', category: '', durationMin: 0, difficulty: 'INTERMEDIATE' as const, patientMeta: '', tags: [] as string[], isFeatured: true };
+const mockAtlasContinue: never[] = [];
 
 const TagPill = ({ label }: { label: string }) => (
   <span className="rounded-pill bg-[var(--color-bg-alt)] px-3 py-1.5 text-[11px] font-bold tracking-[1.2px] text-[var(--color-text-secondary)]">
@@ -132,7 +132,7 @@ export const EcgAtlasPage = () => {
         Continue learning
       </h2>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {mockAtlasContinue.map((c) => (
+        {(mockAtlasContinue as AtlasCase[]).map((c) => (
           <AtlasCaseCard key={c.id} caseItem={c} />
         ))}
       </div>

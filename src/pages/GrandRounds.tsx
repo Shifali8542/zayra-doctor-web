@@ -2,8 +2,9 @@ import { AppLayout } from '@/components/AppLayout';
 import { Card } from '@/components/Card';
 import { Avatar } from '@/components/Avatar';
 import { Icon } from '@/components/Icon';
-import { mockGrandRoundsThreads } from '@/mocks/mockData';
 import type { GrandRoundsThread } from '@/types';
+
+const mockGrandRoundsThreads: GrandRoundsThread[] = [];
 
 const ThreadRow = ({ thread }: { thread: GrandRoundsThread }) => (
   <Card className="transition hover:shadow-[0_8px_24px_rgba(10,37,64,0.08)]">

@@ -1,24 +1,9 @@
-import { useEffect, useState, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { alynaApi, API_ENDPOINTS } from '@/services/api';
+import { useState, useCallback } from 'react';
 import type { AlynaMessage } from '@/types';
 
-export const useAlyna = (caseId = 'ZC-48217') => {
+export const useAlyna = (_patientId?: number) => {
   const [messages, setMessages] = useState<AlynaMessage[]>([]);
   const [draft, setDraft] = useState('');
-
-  const convoQ = useQuery({
-    queryKey: [API_ENDPOINTS.alynaConversation(caseId)],
-    queryFn: () => alynaApi.getConversation(caseId),
-  });
-  const suggestionsQ = useQuery({
-    queryKey: [API_ENDPOINTS.alynaSuggestions],
-    queryFn: alynaApi.getSuggestions,
-  });
-
-  useEffect(() => {
-    if (convoQ.data) setMessages(convoQ.data);
-  }, [convoQ.data]);
 
   const send = useCallback(
     async (text?: string) => {
@@ -31,15 +16,13 @@ export const useAlyna = (caseId = 'ZC-48217') => {
       };
       setMessages((prev) => [...prev, userMsg]);
       setDraft('');
-      const response = await alynaApi.sendMessage(caseId, value);
-      setMessages((prev) => [...prev, response]);
     },
-    [draft, caseId],
+    [draft],
   );
 
   return {
     messages,
-    suggestions: suggestionsQ.data ?? [],
+    suggestions: [] as string[],
     draft,
     setDraft,
     send,

@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { profileApi, API_ENDPOINTS } from '@/services/api';
-import { mockDoctorProfile } from '@/mocks/mockData';
 
 export const useProfile = () => {
   const profileQ = useQuery({
@@ -9,10 +8,8 @@ export const useProfile = () => {
     queryFn: profileApi.getProfile,
   });
 
-  const profile = profileQ.data ?? mockDoctorProfile;
-
-  const [available, setAvailable] = useState(profile.available);
-  const [emergencyOnly, setEmergencyOnly] = useState(profile.emergencyOnly);
+  const [available, setAvailable] = useState(true);
+  const [emergencyOnly, setEmergencyOnly] = useState(false);
   const [lockScreenAlerts, setLockScreenAlerts] = useState(true);
   const [hapticSound, setHapticSound] = useState(true);
 
@@ -20,7 +17,7 @@ export const useProfile = () => {
   const toggleEmergency = useCallback(() => setEmergencyOnly((v) => !v), []);
 
   return {
-    profile,
+    profile: profileQ.data,
     available,
     emergencyOnly,
     lockScreenAlerts,

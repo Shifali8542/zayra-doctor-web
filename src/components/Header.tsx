@@ -1,7 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { Icon } from './Icon';
 import { Avatar } from './Avatar';
-import { mockDoctorProfile } from '@/mocks/mockData';
+import { ZayraLogo } from './ZayraLogo';
+import { useAuth } from '@/context/AuthContext';
 
 interface HeaderProps {
   onProfileClick?: () => void;
@@ -10,6 +11,7 @@ interface HeaderProps {
 
 export const Header = ({ onProfileClick, onBellClick }: HeaderProps) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const handleProfile = () => {
     if (onProfileClick) onProfileClick();
@@ -19,13 +21,7 @@ export const Header = ({ onProfileClick, onBellClick }: HeaderProps) => {
   return (
     <div className="flex items-center justify-between py-3">
       <div className="flex items-center gap-2">
-        {/* Brand: Pulse icon + ZAYRA wordmark */}
-        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-[var(--color-primary)]">
-          <Icon name="pulse" size={18} color="#1FA59B" strokeWidth={2.4} />
-        </div>
-        <span className="text-[16px] font-bold tracking-[3px] text-[var(--color-text-primary)]">
-          ZAYRA
-        </span>
+        <ZayraLogo />
       </div>
 
       <div className="flex items-center gap-3">
@@ -41,7 +37,10 @@ export const Header = ({ onProfileClick, onBellClick }: HeaderProps) => {
           className="transition hover:opacity-80"
           aria-label="Profile"
         >
-          <Avatar initials={mockDoctorProfile.initials} size={40} />
+          <Avatar
+            initials={user ? `${user.first_name?.[0] ?? ''}${user.last_name?.[0] ?? ''}` : '?'}
+            size={40}
+          />
         </button>
       </div>
     </div>

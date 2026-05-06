@@ -1,6 +1,39 @@
 export type Severity = 'CRITICAL' | 'URGENT' | 'ROUTINE';
 
-export type CaseStatus = 'live' | 'claimed' | 'completed';
+export type CaseStatus = 'live' | 'claimed' | 'completed' | 'missed' | 'escalated';
+
+export type CaseSeverity = 'normal' | 'routine' | 'urgent' | 'critical';
+
+// Matches exact backend CaseReview serializer fields
+export interface CaseReview {
+  id: number;
+  status: CaseStatus;
+  severity: CaseSeverity;
+  patient_code: string;
+  age: number | null;
+  sex: string | null;
+  diagnosis: string | null;
+  display_diagnosis: string;
+  diagnosis_class: 'normal' | 'mi' | 'mimic' | 'other' | null;
+  dataset_source: string;
+  dataset_source_display: string;
+  record_name: string;
+  heart_rate_bpm: number | null;
+  hrv_ms: number | null;
+  confidence_score: number | null;
+  notes: string | null;
+  doctor_name: string | null;
+  created_at: string;
+  claimed_at: string | null;
+  completed_at: string | null;
+}
+
+export interface CaseReviewListResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: CaseReview[];
+}
 
 export interface CaseMetric {
   label: string;
@@ -106,14 +139,25 @@ export interface AnomalyDetails {
   bookmarks: { label: string; offset: string }[];
 }
 
-// =============================================================================
 // AUTH
-// =============================================================================
 
 export interface User {
-  id: string;
-  name: string;
+  id: number;
   email: string;
+  first_name: string;
+  last_name: string;
+  phone: string | null;
+  role: 'admin' | 'doctor' | 'nurse' | 'patient';
+  created_at: string;
+  specialization: string | null;
+  license_number: string | null;
+  hospital_name: string | null;
+  years_of_experience: number | null;
+  qualification: string | null;
+  is_doctor: boolean;
+  is_patient: boolean;
+  patient_count?: number;
+  ecg_record_count?: number;
 }
 
 export interface LoginCredentials {
@@ -122,9 +166,22 @@ export interface LoginCredentials {
 }
 
 export interface SignupCredentials {
-  name: string;
+  first_name: string;
+  last_name: string;
   email: string;
+  phone?: string;
   password: string;
+  confirm_password: string;
+  specialization?: string;
+  license_number?: string;
+  hospital_name?: string;
+  years_of_experience?: number;
+  qualification?: string;
+}
+
+export interface AuthTokens {
+  access: string;
+  refresh: string;
 }
 
 

@@ -3,7 +3,6 @@ import { Card } from '@/components/Card';
 import { SectionTitle } from '@/components/SectionTitle';
 import { Icon, type IconName } from '@/components/Icon';
 import { useImpact } from '@/hooks/useImpact';
-import { formatSeconds } from '@/utils/format';
 
 const ImpactStat = ({
   icon,
@@ -40,9 +39,9 @@ const ProgressBar = ({ value, max }: { value: number; max: number }) => {
 };
 
 export const ImpactPage = () => {
-  const { stats, moments } = useImpact();
+  const { profile, summary, isLoading } = useImpact();
 
-  if (!stats) return <AppLayout>{null}</AppLayout>;
+  if (isLoading) return <AppLayout><p className="py-10 text-center text-[var(--color-text-tertiary)]">Loading…</p></AppLayout>;
 
   return (
     <AppLayout>
@@ -61,98 +60,32 @@ export const ImpactPage = () => {
           YOU RANK
         </p>
         <h1 className="mb-4 text-[32px] font-bold leading-[40px] text-white sm:text-[36px]">
-          Top {stats.rankPct}%
+          Dr. {profile?.first_name} {profile?.last_name}
         </h1>
         <p className="mb-5 text-[14px] leading-[22px] text-white/80">
-          Among {stats.totalDoctors.toLocaleString()} active cardiologists in the
-          Zayra network this quarter.
+          {profile?.specialization ?? '—'} · {profile?.hospital_name ?? '—'}
         </p>
-
         <div className="mb-3 flex gap-3">
-          <ImpactStat
-            icon="heart"
-            label="REVIEWED"
-            value={stats.reviewed.toLocaleString()}
-          />
-          <ImpactStat
-            icon="trace"
-            label="ESCALATIONS"
-            value={stats.escalations}
-          />
+          <ImpactStat icon="heart" label="EXPERIENCE" value={profile?.years_of_experience ? `${profile.years_of_experience}y` : '—'} />
+          <ImpactStat icon="trace" label="QUALIFICATION" value={profile?.qualification ?? '—'} />
         </div>
         <div className="flex gap-3">
-          <ImpactStat
-            icon="medal"
-            label="AVG RESPONSE"
-            value={formatSeconds(stats.avgResponseSec)}
-          />
-          <ImpactStat
-            icon="flame"
-            label="STREAK"
-            value={`${stats.streakDays}d`}
-          />
+          <ImpactStat icon="medal" label="PATIENTS" value={(summary as { count?: number })?.count ?? '—'} />
+          <ImpactStat icon="flame" label="ROLE" value={profile?.role ?? '—'} />
         </div>
       </div>
 
       {/* Confidence + Reliability — stacked mobile, side-by-side desktop */}
-      <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card>
-          <p className="eyebrow mb-3 text-[11px] tracking-[1.4px] text-[var(--color-text-tertiary)]">
-            DECISION CONFIDENCE
-          </p>
-          <div className="mb-4 flex items-baseline gap-2">
-            <span className="text-[32px] font-bold leading-[40px] text-[var(--color-text-primary)]">
-              {stats.decisionConfidence}
-            </span>
-            <span className="text-[14px] text-[var(--color-text-tertiary)]">
-              / 100
-            </span>
-          </div>
-          <ProgressBar value={stats.decisionConfidence} max={100} />
-        </Card>
-
-        <Card>
-          <p className="eyebrow mb-3 text-[11px] tracking-[1.4px] text-[var(--color-text-tertiary)]">
-            RELIABILITY
-          </p>
-          <div className="mb-4 flex items-baseline gap-2">
-            <span className="text-[32px] font-bold leading-[40px] text-[var(--color-text-primary)]">
-              {stats.reliability}
-            </span>
-            <span className="text-[14px] text-[var(--color-text-tertiary)]">
-              / 100
-            </span>
-          </div>
-          <ProgressBar value={stats.reliability} max={100} />
-        </Card>
-      </div>
-
-      {/* Lifesaving moments */}
-      <Card className="mt-4">
+      <Card className="mt-5">
         <div className="mb-4 flex items-center gap-2">
-          <Icon
-            name="shield-check"
-            size={18}
-            color="var(--color-text-primary)"
-            strokeWidth={1.8}
-          />
-          <h2 className="text-[22px] font-bold text-[var(--color-text-primary)]">
-            Lifesaving moments
-          </h2>
+          <Icon name="shield-check" size={18} color="var(--color-text-primary)" strokeWidth={1.8} />
+          <h2 className="text-[22px] font-bold text-[var(--color-text-primary)]">Profile details</h2>
         </div>
-        {moments.map((m, i) => (
-          <div
-            key={`${m.when}-${i}`}
-            className="mb-3 rounded-lg bg-[var(--color-bg-alt)] p-4 last:mb-0"
-          >
-            <p className="eyebrow mb-1 text-[11px] tracking-[1.2px] text-[var(--color-text-tertiary)]">
-              {m.when}
-            </p>
-            <p className="text-[14px] font-semibold leading-[22px] text-[var(--color-text-primary)]">
-              {m.description}
-            </p>
-          </div>
-        ))}
+        <div className="flex flex-col gap-2 text-[14px] text-[var(--color-text-primary)]">
+          <p><span className="text-[var(--color-text-tertiary)]">Email: </span>{profile?.email ?? '—'}</p>
+          <p><span className="text-[var(--color-text-tertiary)]">License: </span>{profile?.license_number ?? '—'}</p>
+          <p><span className="text-[var(--color-text-tertiary)]">Member since: </span>{profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : '—'}</p>
+        </div>
       </Card>
     </AppLayout>
   );

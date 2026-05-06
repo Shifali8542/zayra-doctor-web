@@ -1,24 +1,24 @@
 import { useCallback, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { casesApi, traceApi, API_ENDPOINTS } from '@/services/api';
-import { mockLiveCases } from '@/mocks/mockData';
+import { patientApi, API_ENDPOINTS } from '@/services/api';
 
 const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 4;
 
-export const useTraceView = (caseId?: string) => {
-  const resolvedId = caseId ?? mockLiveCases[0].id;
+export const useTraceView = (patientId?: number) => {
   const [zoom, setZoom] = useState(1);
   const [annotation, setAnnotation] = useState('');
 
-  const caseQ = useQuery({
-    queryKey: [API_ENDPOINTS.caseById(resolvedId)],
-    queryFn: () => casesApi.getById(resolvedId),
+  const waveformQ = useQuery({
+    queryKey: [API_ENDPOINTS.patientWaveform(patientId ?? 0)],
+    queryFn: () => patientApi.getWaveform(patientId!),
+    enabled: Boolean(patientId),
   });
 
-  const rhythmQ = useQuery({
-    queryKey: [API_ENDPOINTS.anomalyDetails(resolvedId)],
-    queryFn: () => traceApi.getAnomalyDetails(resolvedId),
+  const analysisQ = useQuery({
+    queryKey: [API_ENDPOINTS.patientWaveformAnalysis(patientId ?? 0)],
+    queryFn: () => patientApi.getWaveformAnalysis(patientId!),
+    enabled: Boolean(patientId),
   });
 
   const zoomIn = useCallback(() => {
@@ -30,14 +30,12 @@ export const useTraceView = (caseId?: string) => {
   const resetZoom = useCallback(() => setZoom(1), []);
 
   const saveAnnotation = useCallback(async () => {
-    if (!annotation.trim()) return;
-    await traceApi.saveAnnotation(resolvedId, annotation);
     setAnnotation('');
-  }, [annotation, resolvedId]);
+  }, []);
 
   return {
-    caseItem: caseQ.data,
-    rhythm: rhythmQ.data,
+    waveform: waveformQ.data as Record<string, unknown> | undefined,
+    analysis: analysisQ.data as Record<string, unknown> | undefined,
     zoom,
     zoomIn,
     zoomOut,

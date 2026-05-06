@@ -1,19 +1,20 @@
 import { useQuery } from '@tanstack/react-query';
-import { impactApi, API_ENDPOINTS } from '@/services/api';
+import { patientApi, profileApi, API_ENDPOINTS } from '@/services/api';
 
 export const useImpact = () => {
-  const statsQ = useQuery({
-    queryKey: [API_ENDPOINTS.impact],
-    queryFn: impactApi.getStats,
+  const profileQ = useQuery({
+    queryKey: [API_ENDPOINTS.profile],
+    queryFn: profileApi.getProfile,
   });
-  const momentsQ = useQuery({
-    queryKey: [API_ENDPOINTS.lifesavingMoments],
-    queryFn: impactApi.getLifesavingMoments,
+
+  const summaryQ = useQuery({
+    queryKey: [API_ENDPOINTS.diagnosisSummary],
+    queryFn: patientApi.getDiagnosisSummary,
   });
 
   return {
-    stats: statsQ.data,
-    moments: momentsQ.data ?? [],
-    isLoading: statsQ.isLoading || momentsQ.isLoading,
+    profile: profileQ.data,
+    summary: summaryQ.data,
+    isLoading: profileQ.isLoading || summaryQ.isLoading,
   };
 };

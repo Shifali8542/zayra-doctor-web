@@ -3,12 +3,11 @@ import { AppLayout } from '@/components/AppLayout';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
 import { Tag } from '@/components/Tag';
-import { SeverityBadge } from '@/components/SeverityBadge';
 import { MetricCard } from '@/components/MetricCard';
 import { Icon, type IconName } from '@/components/Icon';
 import { EcgWaveform } from '@/components/Waveform';
 import { useClaim } from '@/hooks/useClaim';
-import { formatRelativeMinutes, cn } from '@/utils/format';
+import { cn } from '@/utils/format';
 
 const Row = ({
   label,
@@ -88,11 +87,13 @@ const ActionPathButton = ({
 export const ClaimDetailPage = () => {
   const navigate = useNavigate();
   const { caseId } = useParams<{ caseId: string }>();
-  const { caseItem, timeline, patientContext, physiology } = useClaim(caseId);
+  const patientId = caseId ? Number(caseId) : undefined;
+  const { patient, clinicalInfo, records, isLoading } = useClaim(patientId);
 
-  if (!caseItem || !patientContext || !physiology) {
-    return <AppLayout>{null}</AppLayout>;
-  }
+  if (isLoading) return <AppLayout><p className="py-10 text-center text-[var(--color-text-tertiary)]">Loading…</p></AppLayout>;
+  if (!patient) return <AppLayout><p className="py-10 text-center text-[var(--color-text-tertiary)]">Patient not found.</p></AppLayout>;
+
+  const p = patient as { id: number; patient_code: string; age: number; sex: string; diagnosis: string; diagnoses: string[]; dataset_source_display: string };
 
   return (
     <AppLayout>
@@ -107,22 +108,18 @@ export const ClaimDetailPage = () => {
 
       {/* Case header card */}
       <Card className="mb-5">
-        <div className="mb-4 flex items-center">
-          <SeverityBadge severity={caseItem.severity} />
-          <span className="ml-3 text-[13px] tracking-[0.4px] text-[var(--color-text-tertiary)]">
-            {caseItem.caseId}
+        <div className="mb-4 flex items-center gap-2">
+          <span className="rounded-pill bg-[var(--color-bg-alt)] px-3 py-1 text-[11px] font-bold text-[var(--color-text-secondary)]">
+            {p.dataset_source_display}
           </span>
-          <span className="ml-2 text-[13px] text-[var(--color-text-tertiary)]">
-            · {formatRelativeMinutes(caseItem.ageMinutes + 3)}
-          </span>
+          <span className="text-[13px] text-[var(--color-text-tertiary)]">{p.patient_code}</span>
         </div>
 
         <h1 className="mb-2 text-[26px] font-bold leading-[34px] text-[var(--color-text-primary)]">
-          {caseItem.anomaly}
+          {p.diagnoses?.[0] ?? p.diagnosis ?? 'ECG Patient'}
         </h1>
         <p className="mb-4 text-[14px] text-[var(--color-text-tertiary)]">
-          {caseItem.patientSex} · {caseItem.patientAge}y · Patient{' '}
-          {caseItem.patientId} · Signal {caseItem.signalQ}
+          {p.sex} · {p.age}y · Patient {p.patient_code}
         </p>
 
         <div className="mb-4 flex flex-wrap gap-3">
@@ -137,42 +134,16 @@ export const ClaimDetailPage = () => {
             label="Open TraceView"
             iconLeft="trace"
             size="md"
-            onClick={() => navigate(`/trace/${caseItem.id}`)}
+            onClick={() => navigate(`/trace/${p.id}`)}
           />
         </div>
 
         <div className="mb-3 flex gap-3">
-          <MetricCard
-            label="HEART RATE"
-            value={caseItem.hr}
-            unit="bpm"
-            icon="heart"
-            large
-          />
-          <MetricCard
-            label="SPO"
-            subscript="₂"
-            value={caseItem.spo2}
-            unit="%"
-            icon="drop"
-            large
-          />
+          <MetricCard label="AGE" value={p.age} unit="yrs" icon="heart" large />
+          <MetricCard label="SEX" value={p.sex} unit="" icon="drop" large />
         </div>
         <div className="flex gap-3">
-          <MetricCard
-            label="HRV"
-            value={caseItem.hrv ?? 24}
-            unit="ms"
-            icon="trace"
-            large
-          />
-          <MetricCard
-            label="AI CONFIDENCE"
-            value={caseItem.confidence - 7}
-            unit="%"
-            icon="sparkle"
-            large
-          />
+          <MetricCard label="ECG RECORDS" value={(records as unknown[]).length} unit="" icon="trace" large />
         </div>
       </Card>
 
@@ -188,20 +159,14 @@ export const ClaimDetailPage = () => {
             </p>
           </div>
           <button
-            onClick={() => navigate(`/trace/${caseItem.id}`)}
+            onClick={() => navigate(`/trace/${p.id}`)}
             className="text-[13px] font-bold text-[var(--color-primary)] transition hover:opacity-70"
           >
             Inspect in TraceView →
           </button>
         </div>
         <EcgWaveform
-          severity={
-            caseItem.severity === 'CRITICAL'
-              ? 'critical'
-              : caseItem.severity === 'URGENT'
-                ? 'urgent'
-                : 'normal'
-          }
+          severity="urgent"
           height={160}
           seed={43}
           className="mt-4"
@@ -251,73 +216,23 @@ export const ClaimDetailPage = () => {
         </div>
       </Card>
 
-      {/* Timeline */}
+      {/* Diagnoses */}
       <Card className="mb-5">
-        <h2 className="mb-4 text-[22px] font-bold text-[var(--color-text-primary)]">
-          History timeline
-        </h2>
+        <h2 className="mb-4 text-[22px] font-bold text-[var(--color-text-primary)]">Diagnoses</h2>
         <div className="mt-3">
-          {timeline.map((t, i) => (
-            <TimelineItem
-              key={t.when}
-              when={t.when}
-              description={t.description}
-              isFirst={i === 0}
-              isLast={i === timeline.length - 1}
-            />
+          {(p.diagnoses?.length > 0 ? p.diagnoses : [p.diagnosis ?? '—']).map((d: string, i: number) => (
+            <Row key={i} label={`Condition ${i + 1}`} value={d} last={i === (p.diagnoses?.length ?? 1) - 1} />
           ))}
         </div>
       </Card>
 
-      {/* Patient context */}
+      {/* ECG Records */}
       <Card className="mb-5">
-        <h2 className="mb-3 text-[22px] font-bold text-[var(--color-text-primary)]">
-          Patient context
-        </h2>
-        <div className="mt-3">
-          <Row
-            label="Sex / Age"
-            value={`${patientContext.sex} · ${patientContext.age}y`}
-          />
-          <Row label="Comorbidities" value={patientContext.comorbidities} />
-          <Row label="Adherence" value={`${patientContext.adherencePct}%`} />
-          <Row label="Activity" value={patientContext.activity} />
-          <Row label="Sleep" value={patientContext.sleep} />
-          <Row label="Diet pattern" value={patientContext.dietPattern} />
-          <Row
-            label="Smoking / Alcohol"
-            value={patientContext.smokingAlcohol}
-            last
-          />
-        </div>
-      </Card>
-
-      {/* Physiology snapshot */}
-      <Card className="mb-5">
-        <h2 className="mb-3 text-[22px] font-bold text-[var(--color-text-primary)]">
-          Physiology snapshot
-        </h2>
-        <PhysRow
-          label="Pulse"
-          baseline={`vs ${physiology.pulse.baseline} baseline`}
-          value={String(physiology.pulse.value)}
-        />
-        <PhysRow
-          label="HRV"
-          baseline={`vs ${physiology.hrv.baseline} baseline`}
-          value={`${physiology.hrv.value}${physiology.hrv.unit}`}
-        />
-        <PhysRow
-          label="SpO₂"
-          baseline={`vs ${physiology.spo2.baseline}% baseline`}
-          value={`${physiology.spo2.value}%`}
-        />
-        <PhysRow
-          label="Recovery"
-          baseline={physiology.recoveryNote}
-          value={physiology.recovery}
-          last
-        />
+        <h2 className="mb-4 text-[22px] font-bold text-[var(--color-text-primary)]">ECG Records</h2>
+        {(records as Array<{ id: number; record_name: string; sampling_rate: number; num_channels: number; duration_seconds: number }>).map((r, i) => (
+          <Row key={r.id} label={r.record_name} value={`${r.num_channels}ch · ${r.duration_seconds?.toFixed(1)}s · ${r.sampling_rate}Hz`} last={i === records.length - 1} />
+        ))}
+        {records.length === 0 && <p className="text-[14px] text-[var(--color-text-tertiary)]">No records found.</p>}
       </Card>
 
       {/* ActionPath */}
@@ -350,32 +265,3 @@ export const ClaimDetailPage = () => {
     </AppLayout>
   );
 };
-
-const PhysRow = ({
-  label,
-  baseline,
-  value,
-  last,
-}: {
-  label: string;
-  baseline: string;
-  value: string;
-  last?: boolean;
-}) => (
-  <>
-    <div className="flex items-center py-3">
-      <div className="flex-1">
-        <p className="mb-0.5 text-[15px] font-semibold text-[var(--color-text-primary)]">
-          {label}
-        </p>
-        <p className="text-[13px] text-[var(--color-text-tertiary)]">
-          {baseline}
-        </p>
-      </div>
-      <span className="text-[22px] font-bold text-[var(--color-text-primary)]">
-        {value}
-      </span>
-    </div>
-    {!last && <div className="h-px bg-[var(--color-divider)]" />}
-  </>
-);

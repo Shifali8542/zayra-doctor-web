@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Input } from '@/components/Input';
 import { Button } from '@/components/Button';
 import { Icon } from '@/components/Icon';
+import { ZayraLogo } from '@/components/ZayraLogo';
 import { useLoginForm } from '@/hooks/useAuthForm';
 import { useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -31,12 +32,7 @@ export const LoginPage = () => {
       <div className="mx-auto w-full max-w-xl px-5 py-6 sm:py-10">
         {/* Brand row */}
         <div className="mb-4 flex items-center gap-2 py-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-[var(--color-primary)]">
-            <Icon name="pulse" size={18} color="#1FA59B" strokeWidth={2.4} />
-          </div>
-          <span className="text-[16px] font-bold tracking-[3px] text-[var(--color-text-primary)]">
-            ZAYRA
-          </span>
+         <ZayraLogo />
         </div>
 
         {/* Hero */}

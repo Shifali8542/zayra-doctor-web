@@ -1,10 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/AppLayout';
 import { StatBadge } from '@/components/StatBadge';
-import { CaseCard } from '@/components/CaseCard';
 import { SectionTitle } from '@/components/SectionTitle';
+import { CaseCard } from '@/components/CaseCard';
 import { useDashboard } from '@/hooks/useDashboard';
-import { formatCurrency, formatPct, formatSeconds } from '@/utils/format';
+import { cn } from '@/utils/format';
 
 const MiniHeartbeat = () => (
   <svg width={36} height={120} viewBox="0 0 36 120" fill="none">
@@ -21,13 +21,9 @@ const MiniHeartbeat = () => (
 
 export const HomePage = () => {
   const navigate = useNavigate();
-  const { stats, profile, liveCases, pendingCount } = useDashboard();
+  const { profile, patientCount, liveCases, liveCount, claimCase, isClaiming } = useDashboard();
 
-  const firstName = profile?.name.split(' ').slice(-1)[0] ?? 'Doctor';
-
-  const handleClaim = (caseId: string) => {
-    navigate(`/case/${caseId}`);
-  };
+  const firstName = profile?.first_name ?? 'Doctor';
 
   return (
     <AppLayout>
@@ -90,59 +86,66 @@ export const HomePage = () => {
             </span>
           </h1>
           <p className="mb-6 text-[14px] leading-[22px] text-white/80 lg:max-w-2xl lg:text-[16px] lg:leading-[24px]">
-            {pendingCount} anomalies are awaiting clinician review. First to claim{' '}
+            {liveCount} anomalies are awaiting clinician review. First to claim{' '}
             <span className="rounded bg-white/20 px-1 text-white">becomes</span> the
             primary reviewer.
           </p>
 
           {/* Stat pills: stack on mobile, row on desktop */}
-          <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap">
+         <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap">
             <StatBadge
-              icon="bolt"
-              label="Avg response"
-              value={formatSeconds(stats?.avgResponseSec ?? 0)}
-            />
-            <StatBadge
-              icon="trending-up"
-              label="Today"
-              value={formatCurrency(stats?.todayEarningsUsd ?? 0)}
+              icon="heart"
+              label="Specialization"
+              value={profile?.specialization ?? '—'}
             />
             <StatBadge
               icon="activity"
-              label="Confidence"
-              value={formatPct(stats?.confidencePct ?? 0)}
+              label="Hospital"
+              value={profile?.hospital_name ?? '—'}
             />
             <StatBadge
               icon="clock"
-              label="Streak"
-              value={`${stats?.streakDays ?? 0}d`}
+              label="Experience"
+              value={profile?.years_of_experience ? `${profile.years_of_experience}y` : '—'}
             />
           </div>
         </div>
       </div>
 
-      {/* Cases section */}
+      {/* Cases live now section */}
       <div className="mb-4 mt-8 flex items-end justify-between lg:mt-10">
         <SectionTitle
           title="Cases live now"
           subtitle="Sorted by severity and elapsed time. Claim within 60s for response bonus."
         />
-        <button className="hidden whitespace-nowrap text-[14px] font-bold text-[var(--color-primary)] transition hover:opacity-70 lg:inline-block">
+        <button
+          className="hidden whitespace-nowrap text-[14px] font-bold text-[var(--color-primary)] transition hover:opacity-70 lg:inline-block"
+          onClick={() => navigate('/cases')}
+        >
           View all →
         </button>
       </div>
 
-      {/* Cases: 1 col mobile, 2 col tablet, 2-3 col desktop */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {liveCases.map((c) => (
-          <CaseCard
-            key={c.id}
-            caseItem={c}
-            onClick={() => handleClaim(c.id)}
-            onClaim={() => handleClaim(c.id)}
-          />
-        ))}
-      </div>
+      {liveCases.length === 0 ? (
+        <p className="py-6 text-center text-[14px] text-[var(--color-text-tertiary)]">
+          No live cases right now.
+        </p>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {liveCases.map((c) => (
+            <CaseCard
+              key={c.id}
+              caseItem={c}
+              isClaiming={isClaiming}
+              onClick={() => navigate(`/case/${c.id}`)}
+              onClaim={() => claimCase(c.id, {
+                onSuccess: () => navigate(`/case/${c.id}`),
+              })}
+              showClaim
+            />
+          ))}
+        </div>
+      )}
     </AppLayout>
   );
 };

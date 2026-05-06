@@ -2,9 +2,9 @@ import { NavLink } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { Icon, type IconName } from './Icon';
 import { Avatar } from './Avatar';
-import { mockDoctorProfile } from '@/mocks/mockData';
+import { ZayraLogo } from './ZayraLogo';
 import { useDashboard } from '@/hooks/useDashboard';
-import { cn, formatCurrency } from '@/utils/format';
+import { cn } from '@/utils/format';
 
 interface NavItem {
   to: string;
@@ -34,7 +34,7 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
-  const { stats } = useDashboard();
+  const { profile, patientCount } = useDashboard();
 
   return (
     <aside
@@ -43,23 +43,26 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
         collapsed ? 'w-[88px]' : 'w-[260px]',
       )}
     >
-      {/* Brand + collapse toggle */}
+      {/* Brand + collapse/expand toggle */}
       <div
         className={cn(
           'flex items-center border-b border-[var(--color-divider)] px-5 py-5',
           collapsed ? 'justify-center' : 'justify-between',
         )}
       >
-        <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[var(--color-primary)]">
-            <Icon name="pulse" size={18} color="#1FA59B" strokeWidth={2.4} />
-          </div>
-          {!collapsed && (
-            <span className="text-[16px] font-bold tracking-[3px] text-[var(--color-text-primary)]">
-              ZAYRA
-            </span>
+        {/* Logo — click when collapsed to expand */}
+        <button
+          onClick={collapsed ? onToggle : undefined}
+          className={cn(
+            'flex items-center gap-2',
+            collapsed && 'cursor-pointer hover:opacity-70 transition',
           )}
-        </div>
+          aria-label={collapsed ? 'Expand sidebar' : undefined}
+        >
+          <ZayraLogo showWordmark={!collapsed} />
+        </button>
+
+        {/* Collapse arrow — only when expanded */}
         {!collapsed && (
           <button
             onClick={onToggle}
@@ -124,27 +127,28 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
         </ul>
       </nav>
 
-      {/* Today earnings card */}
-      {!collapsed && stats ? (
+      {/* Doctor info card */}
+      {!collapsed && profile ? (
         <div className="m-3 rounded-2xl p-4 hero-gradient">
           <p className="eyebrow mb-2 text-white/80" style={{ letterSpacing: '1.4px' }}>
-            TODAY
+            DOCTOR
           </p>
-          <p className="mb-1 text-[28px] font-bold leading-[32px] text-white">
-            {formatCurrency(stats.todayEarningsUsd)}
+          <p className="mb-1 text-[16px] font-bold leading-[22px] text-white">
+            Dr. {profile.first_name} {profile.last_name}
           </p>
           <p className="text-[12px] leading-4 text-white/75">
-            7 cases reviewed · {stats.avgResponseSec}s avg
+            {patientCount} patients · {profile.specialization ?? '—'}
           </p>
         </div>
       ) : null}
 
-      {/* Expand button (when collapsed) */}
+     {/* Expand button at bottom — visible when collapsed */}
       {collapsed && (
         <button
           onClick={onToggle}
-          className="m-3 flex h-10 items-center justify-center rounded-md border border-[var(--color-divider)] text-[var(--color-text-tertiary)] transition hover:bg-[var(--color-bg-alt)]"
+          className="m-3 flex h-10 items-center justify-center rounded-md border border-[var(--color-divider)] bg-[var(--color-surface)] text-[var(--color-text-tertiary)] transition hover:bg-[var(--color-bg-alt)]"
           aria-label="Expand sidebar"
+          title="Expand sidebar"
         >
           <Icon name="chevron-right" size={16} color="currentColor" />
         </button>

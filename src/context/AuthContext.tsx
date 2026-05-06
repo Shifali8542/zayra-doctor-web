@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { User } from '@/types';
-import { authApi } from '@/services/api';
+import { authApi, clearTokens, getAccessToken } from '@/services/api';
 
 interface AuthContextValue {
   user: User | null;
@@ -32,6 +32,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   });
   const [loading, setLoading] = useState(false);
 
+  // On mount — if we have a token but no cached user, fetch profile
+  useEffect(() => {
+    const token = getAccessToken();
+    if (token && !user) {
+      authApi.me().then((u) => {
+        if (u) setUser(u);
+      });
+    }
+  }, []);
+
   useEffect(() => {
     if (user) {
       window.localStorage.setItem(USER_KEY, JSON.stringify(user));
@@ -54,7 +64,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     async (name: string, email: string, password: string) => {
       setLoading(true);
       try {
-        const u = await authApi.signup({ name, email, password });
+        const [first_name, ...rest] = name.trim().split(' ');
+        const u = await authApi.registerDoctor({
+          first_name,
+          last_name: rest.join(' ') || '',
+          email,
+          password,
+          confirm_password: password,
+        });
         setUser(u);
       } finally {
         setLoading(false);
@@ -63,13 +80,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     [],
   );
 
-  // "Skip for now" — bypass auth and proceed to home with a synthetic guest.
   const skip = useCallback(() => {
-    setUser({ id: 'guest', name: 'Guest Doctor', email: 'guest@zayra.app' });
+    setUser({
+      id: 0,
+      email: 'guest@zayra.app',
+      first_name: 'Guest',
+      last_name: 'Doctor',
+      phone: null,
+      role: 'doctor',
+      created_at: new Date().toISOString(),
+      specialization: null,
+      license_number: null,
+      hospital_name: null,
+      years_of_experience: null,
+      qualification: null,
+      is_doctor: true,
+      is_patient: false,
+    });
   }, []);
 
   const logout = useCallback(async () => {
     await authApi.logout();
+    clearTokens();
     setUser(null);
   }, []);
 

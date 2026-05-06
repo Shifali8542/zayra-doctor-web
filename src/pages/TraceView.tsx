@@ -1,8 +1,9 @@
+import type { ReactNode } from 'react';
 import { useParams } from 'react-router-dom';
 import { AppLayout } from '@/components/AppLayout';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
-import { Icon } from '@/components/Icon';
+import { Icon, type IconName } from '@/components/Icon';
 import { EcgWaveform } from '@/components/Waveform';
 import { useTraceView } from '@/hooks/useTraceView';
 import { cn } from '@/utils/format';
@@ -11,7 +12,7 @@ const ToolBtn = ({
   icon,
   onClick,
 }: {
-  icon: any;
+  icon: IconName;
   onClick?: () => void;
 }) => (
   <button
@@ -24,35 +25,26 @@ const ToolBtn = ({
 
 export const TraceViewPage = () => {
   const { caseId } = useParams<{ caseId: string }>();
+  const patientId = caseId ? Number(caseId) : undefined;
   const {
-    caseItem,
-    rhythm,
+    waveform,
+    analysis,
     zoom,
     zoomIn,
     zoomOut,
     annotation,
     setAnnotation,
     saveAnnotation,
-  } = useTraceView(caseId);
+  } = useTraceView(patientId);
 
-  if (!caseItem || !rhythm) return <AppLayout>{null}</AppLayout>;
-
-  const sev =
-    caseItem.severity === 'CRITICAL'
-      ? 'critical'
-      : caseItem.severity === 'URGENT'
-        ? 'urgent'
-        : 'normal';
-
+  const sev = 'urgent';
   return (
     <AppLayout>
       {/* Title */}
       <div className="mb-4 mt-4">
-        <h1 className="mb-2 text-[26px] font-bold text-[var(--color-text-primary)]">
-          TraceView
-        </h1>
+        <h1 className="mb-2 text-[26px] font-bold text-[var(--color-text-primary)]">TraceView</h1>
         <p className="text-[14px] leading-[22px] text-[var(--color-text-secondary)]">
-          {caseItem.caseId} · Lead II · 25 mm/s · 10 mm/mV · {caseItem.signalQ}
+          Patient #{caseId} · Lead II · 25 mm/s · 10 mm/mV
         </p>
       </div>
 
@@ -89,35 +81,18 @@ export const TraceViewPage = () => {
       </Strip>
 
       {/* Rhythm summary */}
-      <Card className="mt-6">
-        <h2 className="mb-3 text-[22px] font-bold text-[var(--color-text-primary)]">
-          Rhythm summary
-        </h2>
-        <KvRow label="Rate" value={`${rhythm.rate} bpm`} />
-        <KvRow label="QRS width" value={`${rhythm.qrsWidth} ms`} />
-        <KvRow label="QT / QTc" value={`${rhythm.qt} / ${rhythm.qtc} ms`} />
-        <KvRow label="Axis" value={`${rhythm.axis}°`} last />
-      </Card>
-
-      {/* Bookmarks */}
-      <Card className="mt-4">
-        <h2 className="mb-3 text-[22px] font-bold text-[var(--color-text-primary)]">
-          Event bookmarks
-        </h2>
-        {rhythm.bookmarks.map((b) => (
-          <button
-            key={b.label}
-            className="flex w-full items-center justify-between border-b border-[var(--color-divider)] py-3 text-left transition last:border-0 hover:opacity-70"
-          >
-            <span className="text-[14px] text-[var(--color-text-primary)]">
-              {b.label} {b.offset}
-            </span>
-            <span className="text-[13px] font-semibold text-[var(--color-primary)]">
-              jump →
-            </span>
-          </button>
-        ))}
-      </Card>
+      {Boolean(waveform) && (
+        <Card className="mt-6">
+          <h2 className="mb-3 text-[22px] font-bold text-[var(--color-text-primary)]">Waveform data</h2>
+          <p className="text-[14px] text-[var(--color-text-secondary)]">Waveform </p>
+        </Card>
+      )}
+      {Boolean(analysis) && (
+        <Card className="mt-4">
+          <h2 className="mb-3 text-[22px] font-bold text-[var(--color-text-primary)]">Analysis</h2>
+          <p className="text-[14px] text-[var(--color-text-secondary)]">Analysis data loaded.</p>
+        </Card>
+      )}
 
       {/* Annotations */}
       <Card className="mt-4">
@@ -152,13 +127,13 @@ const Strip = ({
 }: {
   label: string;
   highlighted?: boolean;
-  children: React.ReactNode;
+  children: ReactNode;
 }) => (
   <div
     className={cn(
       'mb-4 overflow-hidden rounded-lg p-3',
       highlighted &&
-        'border border-[rgba(255,110,122,0.45)] shadow-[0_0_20px_rgba(255,110,122,0.35)]',
+      'border border-[rgba(255,110,122,0.45)] shadow-[0_0_20px_rgba(255,110,122,0.35)]',
     )}
     style={{ backgroundColor: '#0E1B2C' }}
   >
@@ -174,26 +149,3 @@ const Strip = ({
   </div>
 );
 
-const KvRow = ({
-  label,
-  value,
-  last,
-}: {
-  label: string;
-  value: string;
-  last?: boolean;
-}) => (
-  <div
-    className={cn(
-      'flex items-center justify-between py-3',
-      !last && 'border-b border-[var(--color-divider)]',
-    )}
-  >
-    <span className="text-[14px] text-[var(--color-text-secondary)]">
-      {label}
-    </span>
-    <span className="text-[14px] font-semibold text-[var(--color-text-primary)]">
-      {value}
-    </span>
-  </div>
-);

@@ -92,35 +92,22 @@ export const ProfilePage = () => {
       {/* Profile hero */}
       <div className="hero-gradient mt-4 flex flex-col items-center rounded-2xl p-6">
         <Avatar
-          initials={profile.initials}
+          initials={profile ? `${profile.first_name?.[0] ?? ''}${profile.last_name?.[0] ?? ''}` : '?'}
           size={112}
           className="mb-4"
           ringClassName="!border-4 !border-white/20"
         />
-        <p
-          className="eyebrow mb-2 text-white/80"
-          style={{ letterSpacing: '1.6px' }}
-        >
-          VERIFIED CARDIOLOGIST
+        <p className="eyebrow mb-2 text-white/80" style={{ letterSpacing: '1.6px' }}>
+          {profile?.role?.toUpperCase() ?? 'DOCTOR'}
         </p>
         <h1 className="mb-2 text-center text-[26px] font-bold text-white sm:text-[28px]">
-          {profile.name}
+          {profile ? `${profile.first_name} ${profile.last_name}` : '—'}
         </h1>
         <p className="mb-4 text-center text-[14px] text-white/80">
-          {profile.specialty} · {profile.experienceYears} years · {profile.city}
+          {profile?.specialization ?? '—'} · {profile?.years_of_experience ?? '—'} years · {profile?.hospital_name ?? '—'}
         </p>
-
-        <Tag
-          onDark
-          label="License verified"
-          leftIcon={<Icon name="shield-check" size={13} color="#FFFFFF" />}
-          className="mb-2 !bg-white/15"
-        />
-        <Tag
-          onDark
-          label={profile.languages.join(' · ')}
-          className="!bg-white/10"
-        />
+        <Tag onDark label={profile?.license_number ? 'License verified' : 'No license on file'} leftIcon={<Icon name="shield-check" size={13} color="#FFFFFF" />} className="mb-2 !bg-white/15" />
+        <Tag onDark label={profile?.qualification ?? '—'} className="!bg-white/10" />
       </div>
 
       {/* Settings cards — 1 col mobile, 2 col desktop */}
@@ -140,12 +127,8 @@ export const ProfilePage = () => {
             description="Only critical-tier cases"
             rightSlot={<Toggle value={emergencyOnly} onChange={toggleEmergency} />}
           />
-          <KvRow label="Working hours" value={profile.workingHours} />
-          <KvRow
-            label="Severity filter"
-            value={profile.severityFilters}
-            borderless
-          />
+          <KvRow label="License No." value={profile?.license_number ?? '—'} />
+          <KvRow label="Qualification" value={profile?.qualification ?? '—'} borderless />
         </Card>
 
         {/* Notifications */}

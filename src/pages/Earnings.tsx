@@ -2,13 +2,12 @@ import { AppLayout } from '@/components/AppLayout';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
 import { Icon } from '@/components/Icon';
-import {
-  mockEarningsSummary,
-  mockEarningsBySeverity,
-  mockEarningsReviews,
-} from '@/mocks/mockData';
 import { formatCurrency, cn } from '@/utils/format';
 import type { EarningsBySeverity, EarningsReviewRow } from '@/types';
+
+const mockEarningsSummary = { today: 0, thisWeek: 0, thisMonth: 0, pendingPayout: 0, nextSettlementLabel: 'Coming soon' };
+const mockEarningsBySeverity: EarningsBySeverity[] = [];
+const mockEarningsReviews: EarningsReviewRow[] = [];
 
 const SummaryTile = ({
   label,

@@ -1,44 +1,29 @@
 import { useQuery } from '@tanstack/react-query';
-import {
-  casesApi,
-  patientApi,
-  API_ENDPOINTS,
-} from '@/services/api';
-import { mockLiveCases } from '@/mocks/mockData';
+import { patientApi, API_ENDPOINTS } from '@/services/api';
 
-export const useClaim = (caseId?: string) => {
-  // Fall back to a known case id when nothing is passed in.
-  const resolvedId = caseId ?? mockLiveCases[1].id;
-
-  const caseQ = useQuery({
-    queryKey: [API_ENDPOINTS.caseById(resolvedId)],
-    queryFn: () => casesApi.getById(resolvedId),
-    enabled: Boolean(resolvedId),
-  });
-
-  const patientId = caseQ.data?.patientId ?? '';
-
-  const timelineQ = useQuery({
-    queryKey: [API_ENDPOINTS.timeline(patientId)],
-    queryFn: () => patientApi.getTimeline(patientId),
+export const useClaim = (patientId?: number) => {
+  const detailQ = useQuery({
+    queryKey: [API_ENDPOINTS.patientDetail(patientId ?? 0)],
+    queryFn: () => patientApi.getDetail(patientId!),
     enabled: Boolean(patientId),
   });
-  const contextQ = useQuery({
-    queryKey: [API_ENDPOINTS.patientContext(patientId)],
-    queryFn: () => patientApi.getContext(patientId),
+
+  const clinicalQ = useQuery({
+    queryKey: [API_ENDPOINTS.patientClinicalInfo(patientId ?? 0)],
+    queryFn: () => patientApi.getClinicalInfo(patientId!),
     enabled: Boolean(patientId),
   });
-  const physQ = useQuery({
-    queryKey: [API_ENDPOINTS.physiology(patientId)],
-    queryFn: () => patientApi.getPhysiology(patientId),
+
+  const recordsQ = useQuery({
+    queryKey: [API_ENDPOINTS.patientRecords(patientId ?? 0)],
+    queryFn: () => patientApi.getRecords(patientId!),
     enabled: Boolean(patientId),
   });
 
   return {
-    caseItem: caseQ.data,
-    timeline: timelineQ.data ?? [],
-    patientContext: contextQ.data,
-    physiology: physQ.data,
-    isLoading: caseQ.isLoading,
+    patient: detailQ.data,
+    clinicalInfo: clinicalQ.data,
+    records: recordsQ.data?.records ?? [],
+    isLoading: detailQ.isLoading,
   };
 };
