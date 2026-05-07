@@ -35,6 +35,88 @@ export interface CaseReviewListResponse {
   results: CaseReview[];
 }
 
+// Matches GET /cases/:id/detail/ response exactly
+export interface CaseVitals {
+  heart_rate_bpm: number | null;
+  heart_rate_min: number | null;
+  heart_rate_max: number | null;
+  hrv_ms: number | null;
+  rhythm: string | null;
+  quality_score: number | null;
+  num_beats: number | null;
+}
+
+export interface CaseEcgRecord {
+  id: number;
+  record_name: string;
+  sampling_rate: number;
+  num_channels: number;
+  duration_seconds: number | null;
+  channel_names: string[];
+  is_current: boolean;
+}
+
+export interface CaseHistoryEvent {
+  when: string | null;
+  status: CaseStatus;
+  description: string;
+  doctor_name: string | null;
+}
+
+export interface CaseOrinnAnalysis {
+  risk_level: string;
+  risk_score: number | null;
+  narrative: string | null;
+  recommendation: string | null;
+  findings: string[];
+  differential: string[];
+  source: string;
+}
+
+export interface CaseStAnalysis {
+  overall_status: string;
+  stemi_suspected: boolean;
+  affected_region: string;
+  confidence_score: number;
+  overall_status_note: string;
+}
+
+export interface CasePatientDetail {
+  id: number;
+  patient_code: string;
+  age: number | null;
+  sex: string | null;
+  diagnosis: string | null;
+  display_diagnosis: string;
+  all_diagnoses: string[];
+  diagnosis_class: string | null;
+  dataset_source: string;
+  dataset_source_display: string;
+  extra_info: Record<string, unknown>;
+}
+
+export interface CaseDetail {
+  case: {
+    id: number;
+    status: CaseStatus;
+    severity: CaseSeverity;
+    heart_rate_bpm: number | null;
+    hrv_ms: number | null;
+    confidence_score: number | null;
+    notes: string | null;
+    doctor_name: string | null;
+    created_at: string;
+    claimed_at: string | null;
+    completed_at: string | null;
+  };
+  patient: CasePatientDetail;
+  vitals: CaseVitals;
+  records: CaseEcgRecord[];
+  orinn: CaseOrinnAnalysis | null;
+  st_analysis: CaseStAnalysis | null;
+  history: CaseHistoryEvent[];
+}
+
 export interface CaseMetric {
   label: string;
   value: string | number;

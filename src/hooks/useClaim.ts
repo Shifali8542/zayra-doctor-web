@@ -1,29 +1,58 @@
-import { useQuery } from '@tanstack/react-query';
-import { patientApi, API_ENDPOINTS } from '@/services/api';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { casesApi, API_ENDPOINTS } from '@/services/api';
 
-export const useClaim = (patientId?: number) => {
+// caseId here = CaseReview.id (not patient id)
+export const useClaim = (caseId?: number) => {
+  const queryClient = useQueryClient();
+
+  // Single call — gets everything for the detail page
   const detailQ = useQuery({
-    queryKey: [API_ENDPOINTS.patientDetail(patientId ?? 0)],
-    queryFn: () => patientApi.getDetail(patientId!),
-    enabled: Boolean(patientId),
+    queryKey: [API_ENDPOINTS.caseDetailFull(caseId ?? 0)],
+    queryFn: () => casesApi.getDetailFull(caseId!),
+    enabled: Boolean(caseId),
   });
 
-  const clinicalQ = useQuery({
-    queryKey: [API_ENDPOINTS.patientClinicalInfo(patientId ?? 0)],
-    queryFn: () => patientApi.getClinicalInfo(patientId!),
-    enabled: Boolean(patientId),
+  // Complete mutation
+  const completeMutation = useMutation({
+    mutationFn: ({ notes }: { notes: string }) =>
+      casesApi.complete(caseId!, notes),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [API_ENDPOINTS.caseList] });
+      queryClient.invalidateQueries({
+        queryKey: [API_ENDPOINTS.caseDetailFull(caseId ?? 0)],
+      });
+    },
   });
 
-  const recordsQ = useQuery({
-    queryKey: [API_ENDPOINTS.patientRecords(patientId ?? 0)],
-    queryFn: () => patientApi.getRecords(patientId!),
-    enabled: Boolean(patientId),
+  // Escalate mutation
+  const escalateMutation = useMutation({
+    mutationFn: ({ notes }: { notes: string }) =>
+      casesApi.escalate(caseId!, notes),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [API_ENDPOINTS.caseList] });
+      queryClient.invalidateQueries({
+        queryKey: [API_ENDPOINTS.caseDetailFull(caseId ?? 0)],
+      });
+    },
+  });
+
+  // Orinn AI analysis trigger
+  const orinnMutation = useMutation({
+    mutationFn: () => casesApi.triggerOrinn(caseId!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [API_ENDPOINTS.caseDetailFull(caseId ?? 0)],
+      });
+    },
   });
 
   return {
-    patient: detailQ.data,
-    clinicalInfo: clinicalQ.data,
-    records: recordsQ.data?.records ?? [],
+    detail: detailQ.data ?? null,
     isLoading: detailQ.isLoading,
+    completeCase: completeMutation.mutate,
+    escalateCase: escalateMutation.mutate,
+    triggerOrinn: orinnMutation.mutate,
+    isActioning: completeMutation.isPending || escalateMutation.isPending,
+    isAnalyzing: orinnMutation.isPending,
   };
 };

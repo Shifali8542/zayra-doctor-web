@@ -1,4 +1,4 @@
-import type { User, LoginCredentials, SignupCredentials, CaseStatus, CaseSeverity, CaseReview, CaseReviewListResponse, } from '@/types';
+import type { User, LoginCredentials, SignupCredentials, CaseStatus, CaseSeverity, CaseReview, CaseReviewListResponse, CaseDetail, CaseOrinnAnalysis,} from '@/types';
 
 // CONFIG
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://192.168.1.172:8000/api/v1';
@@ -64,6 +64,8 @@ export const API_ENDPOINTS = {
   // Cases lifecycle
   caseList: '/cases/',
   caseDetail: (id: number) => `/cases/${id}/`,
+  caseDetailFull: (id: number) => `/cases/${id}/detail/`,
+  caseAnalyze: (id: number) => `/cases/${id}/analyze/`,
   caseClaim: (id: number) => `/cases/${id}/claim/`,
   caseComplete: (id: number) => `/cases/${id}/complete/`,
   caseEscalate: (id: number) => `/cases/${id}/escalate/`,
@@ -164,13 +166,15 @@ export const casesApi = {
     status?: CaseStatus;
     severity?: CaseSeverity;
     page?: number;
+    page_size?: number;
     mine?: boolean;
   }) => {
     const query = new URLSearchParams();
-    if (params?.status)   query.set('status',   params.status);
-    if (params?.severity) query.set('severity', params.severity);
-    if (params?.page)     query.set('page',     String(params.page));
-    if (params?.mine)     query.set('mine',     'true');
+    if (params?.status)     query.set('status',     params.status);
+    if (params?.severity)   query.set('severity',   params.severity);
+    if (params?.page)       query.set('page',       String(params.page));
+    if (params?.page_size)  query.set('page_size',  String(params.page_size));
+    if (params?.mine)       query.set('mine',       'true');
     const qs = query.toString();
     return apiFetch<CaseReviewListResponse>(
       `${API_ENDPOINTS.caseList}${qs ? `?${qs}` : ''}`,
@@ -194,6 +198,12 @@ export const casesApi = {
       method: 'POST',
       body: JSON.stringify({ notes }),
     }),
+
+  getDetailFull: async (id: number) =>
+    apiFetch<CaseDetail>(API_ENDPOINTS.caseDetailFull(id)),
+
+  triggerOrinn: async (id: number) =>
+    apiFetch<CaseOrinnAnalysis>(API_ENDPOINTS.caseAnalyze(id), { method: 'POST' }),
 };
 
 // PROFILE API

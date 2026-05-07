@@ -2,9 +2,11 @@ import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/AppLayout';
 import { SectionTitle } from '@/components/SectionTitle';
 import { CaseCard } from '@/components/CaseCard';
+import { SeverityBadge } from '@/components/SeverityBadge';
 import { useCases } from '@/hooks/useCases';
 import type { CasesTab } from '@/hooks/useCases';
-import { cn } from '@/utils/format';
+import type { CaseReview } from '@/types';
+import { cn, formatRelativeTime } from '@/utils/format';
 
 interface TabProps {
   label: string;
@@ -42,6 +44,9 @@ export const CasesPage = () => {
     setActiveTab,
     cases,
     totalCount,
+    hasMore,
+    page,
+    setPage,
     tabCounts,
     isLoading,
     claimCase,
@@ -79,14 +84,14 @@ export const CasesPage = () => {
         </div>
       </div>
 
-      {/* Cases grid */}
+      {/* Cases content — cards for live/claimed, table for completed/escalated/missed */}
       {isLoading ? (
         <p className="py-10 text-center text-[var(--color-text-tertiary)]">Loading cases…</p>
       ) : cases.length === 0 ? (
         <p className="py-10 text-center text-[var(--color-text-tertiary)]">
           No {activeTab} cases.
         </p>
-      ) : (
+      ) : activeTab === 'live' || activeTab === 'claimed' ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {cases.map((c) => (
             <CaseCard
@@ -101,11 +106,72 @@ export const CasesPage = () => {
             />
           ))}
         </div>
+      ) : (
+        /* Table view for completed / escalated / missed */
+        <div className="overflow-hidden rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)]">
+          {/* Table header */}
+          <div className="grid grid-cols-[1fr_2fr_1fr_1fr_2fr_0.7fr] border-b border-[var(--color-divider)] px-6 py-3">
+            {['CASE', 'ANOMALY', 'SEVERITY', 'WHEN', 'OUTCOME', 'PAYOUT'].map((h) => (
+              <span key={h} className="eyebrow text-[11px] tracking-[1.2px] text-[var(--color-text-tertiary)]">
+                {h}
+              </span>
+            ))}
+          </div>
+          {/* Table rows */}
+          {(cases as CaseReview[]).map((c, i) => (
+            <div
+              key={c.id}
+              onClick={() => navigate(`/case/${c.id}`)}
+              className={cn(
+                'grid cursor-pointer grid-cols-[1fr_2fr_1fr_1fr_2fr_0.7fr] items-center px-6 py-4 transition hover:bg-[var(--color-bg-alt)]',
+                i !== cases.length - 1 && 'border-b border-[var(--color-divider)]',
+              )}
+            >
+              {/* Case ID */}
+              <span className="text-[13px] font-mono text-[var(--color-text-tertiary)]">
+                {c.patient_code}
+              </span>
+              {/* Anomaly */}
+              <div>
+                <p className="text-[14px] font-semibold text-[var(--color-text-primary)]">
+                  {c.display_diagnosis || c.diagnosis || '—'}
+                </p>
+                <p className="text-[12px] text-[var(--color-text-tertiary)]">
+                  {c.sex} · {c.age}y · {c.patient_code}
+                </p>
+              </div>
+              {/* Severity */}
+              <SeverityBadge severity={c.severity} />
+              {/* When */}
+              <span className="text-[13px] text-[var(--color-text-secondary)]">
+                {formatRelativeTime(c.completed_at ?? c.created_at)}
+              </span>
+              {/* Outcome — doctor's notes */}
+              <span className="text-[13px] text-[var(--color-text-secondary)]">
+                {(c as unknown as { outcome?: string }).outcome || c.notes || '—'}
+              </span>
+              {/* Payout — placeholder until earnings backend */}
+              <span className="text-right text-[14px] font-bold text-[var(--color-text-primary)]">
+                —
+              </span>
+            </div>
+          ))}
+        </div>
       )}
 
-      <p className="mt-4 text-center text-[13px] text-[var(--color-text-tertiary)]">
-        {totalCount} total · showing {cases.length}
-      </p>
+      <div className="mt-6 flex flex-col items-center gap-3">
+        <p className="text-[13px] text-[var(--color-text-tertiary)]">
+          {cases.length} of {totalCount} cases
+        </p>
+        {hasMore && (
+          <button
+            onClick={() => setPage(page + 1)}
+            className="rounded-pill border border-[var(--color-divider)] bg-[var(--color-surface)] px-6 py-3 text-[14px] font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-bg-alt)]"
+          >
+            Load more
+          </button>
+        )}
+      </div>
     </AppLayout>
   );
 };
