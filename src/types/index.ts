@@ -95,6 +95,41 @@ export interface CasePatientDetail {
   extra_info: Record<string, unknown>;
 }
 
+// Matches GET /api/v1/impact/stats/ response
+export interface ImpactStats {
+  doctor: {
+    id: number;
+    name: string;
+    specialization: string | null;
+    hospital_name: string | null;
+  };
+  reviewed_count: number;
+  escalated_count: number;
+  claimed_count: number;
+  avg_response_sec: number | null;
+  streak_days: number;
+  confidence_score: number | null;
+  reliability_pct: number | null;
+  trust_score: number | null;
+  rank_pct: number;
+  total_doctors: number;
+}
+
+// Matches GET /api/v1/impact/moments/ response
+export interface ImpactMoment {
+  id: number;
+  when: string | null;
+  description: string;
+  patient_code: string;
+  severity: CaseSeverity;
+  diagnosis: string | null;
+}
+
+export interface ImpactMomentsResponse {
+  count: number;
+  moments: ImpactMoment[];
+}
+
 export interface CaseDetail {
   case: {
     id: number;

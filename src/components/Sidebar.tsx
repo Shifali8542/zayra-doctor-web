@@ -130,14 +130,11 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
       {/* Doctor info card */}
       {!collapsed && profile ? (
         <div className="m-3 rounded-2xl p-4 hero-gradient">
-          <p className="eyebrow mb-2 text-white/80" style={{ letterSpacing: '1.4px' }}>
-            DOCTOR
-          </p>
           <p className="mb-1 text-[16px] font-bold leading-[22px] text-white">
             Dr. {profile.first_name} {profile.last_name}
           </p>
           <p className="text-[12px] leading-4 text-white/75">
-            {patientCount} patients · {profile.specialization ?? '—'}
+          {profile.specialization ?? '—'}
           </p>
         </div>
       ) : null}

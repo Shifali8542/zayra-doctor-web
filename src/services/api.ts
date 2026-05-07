@@ -1,4 +1,6 @@
-import type { User, LoginCredentials, SignupCredentials, CaseStatus, CaseSeverity, CaseReview, CaseReviewListResponse, CaseDetail, CaseOrinnAnalysis,} from '@/types';
+import type { User, LoginCredentials, SignupCredentials, CaseStatus, CaseSeverity, CaseReview, CaseReviewListResponse, CaseDetail, CaseOrinnAnalysis, 
+  ImpactStats, ImpactMomentsResponse,
+} from '@/types';
 
 // CONFIG
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://192.168.1.172:8000/api/v1';
@@ -61,6 +63,10 @@ export const API_ENDPOINTS = {
   // Assessments
   aiAnalysis: (id: number) => `/assessments/${id}/analyze/`,
 
+  // Impact
+  impactStats: '/impact/stats/',
+  impactMoments: '/impact/moments/',
+
   // Cases lifecycle
   caseList: '/cases/',
   caseDetail: (id: number) => `/cases/${id}/`,
@@ -105,7 +111,7 @@ export const authApi = {
     await apiFetch(API_ENDPOINTS.logout, {
       method: 'POST',
       body: JSON.stringify({ refresh }),
-    }).catch(() => {});
+    }).catch(() => { });
     clearTokens();
   },
 
@@ -116,10 +122,7 @@ export const authApi = {
   },
 };
 
-// =============================================================================
 // PATIENTS API
-// =============================================================================
-
 export const patientApi = {
   getList: async (params?: { page?: number; search?: string }) => {
     const query = new URLSearchParams();
@@ -157,10 +160,7 @@ export const patientApi = {
 };
 
 
-// =============================================================================
 // CASES API
-// =============================================================================
-
 export const casesApi = {
   getList: async (params?: {
     status?: CaseStatus;
@@ -168,13 +168,15 @@ export const casesApi = {
     page?: number;
     page_size?: number;
     mine?: boolean;
+    search?: string;
   }) => {
     const query = new URLSearchParams();
-    if (params?.status)     query.set('status',     params.status);
-    if (params?.severity)   query.set('severity',   params.severity);
-    if (params?.page)       query.set('page',       String(params.page));
-    if (params?.page_size)  query.set('page_size',  String(params.page_size));
-    if (params?.mine)       query.set('mine',       'true');
+    if (params?.status) query.set('status', params.status);
+    if (params?.severity) query.set('severity', params.severity);
+    if (params?.page) query.set('page', String(params.page));
+    if (params?.page_size) query.set('page_size', String(params.page_size));
+    if (params?.mine) query.set('mine', 'true');
+    if (params?.search) query.set('search', params.search);
     const qs = query.toString();
     return apiFetch<CaseReviewListResponse>(
       `${API_ENDPOINTS.caseList}${qs ? `?${qs}` : ''}`,
@@ -210,4 +212,13 @@ export const casesApi = {
 export const profileApi = {
   getProfile: async (): Promise<User> =>
     apiFetch<User>(API_ENDPOINTS.profile),
+};
+
+// IMPACT API
+export const impactApi = {
+  getStats: async () =>
+    apiFetch<ImpactStats>(API_ENDPOINTS.impactStats),
+
+  getMoments: async () =>
+    apiFetch<ImpactMomentsResponse>(API_ENDPOINTS.impactMoments),
 };

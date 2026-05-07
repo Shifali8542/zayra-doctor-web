@@ -358,7 +358,7 @@ export const ClaimDetailPage = () => {
         )}
       </Card>
 
-      {/* ── ActionPath ─────────────────────────────────────────────────────── */}
+      {/* ActionPath */}
       {isClaimed && (
         <div className="hero-gradient mb-5 mt-3 rounded-2xl p-6">
           <p className="eyebrow mb-2 text-white/80" style={{ letterSpacing: '1.4px' }}>
