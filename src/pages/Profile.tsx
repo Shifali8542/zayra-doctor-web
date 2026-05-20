@@ -191,14 +191,14 @@ export const ProfilePage = () => {
           />
         </Card>
 
-        {/* Account placeholder card (matches screenshot 2 layout) */}
+        {/* Account */}
         <Card>
           <h2 className="mb-3 text-[22px] font-bold text-[var(--color-text-primary)]">
             Account
           </h2>
-          <KvRow label="Payout method" value="Bank · ICICI ··· 4421" />
-          <KvRow label="Tax info" value="On file" />
-          <KvRow label="Member since" value="March 2023" borderless />
+          <KvRow label="Member since" value={profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }) : '—'} />
+          <KvRow label="Role" value={profile?.role ?? '—'} />
+          <KvRow label="Email" value={profile?.email ?? '—'} borderless />
         </Card>
       </div>
 

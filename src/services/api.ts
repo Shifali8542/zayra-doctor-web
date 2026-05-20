@@ -1,5 +1,9 @@
-import type { User, LoginCredentials, SignupCredentials, CaseStatus, CaseSeverity, CaseReview, CaseReviewListResponse, CaseDetail, CaseOrinnAnalysis, 
-  ImpactStats, ImpactMomentsResponse, PatientWaveformResponse, WaveformAnalysisResponse, RecordsIndexResponse,
+import type {
+  User, LoginCredentials, SignupCredentials,
+  CaseStatus, CaseSeverity, CaseReview, CaseReviewListResponse,
+  CaseDetail, CaseOrinnAnalysis, CaseCounts,
+  ImpactStats, ImpactMomentsResponse,
+  PatientWaveformResponse, WaveformAnalysisResponse, RecordsIndexResponse,
 } from '@/types';
 
 // CONFIG
@@ -70,6 +74,7 @@ export const API_ENDPOINTS = {
 
   // Cases lifecycle
   caseList: '/cases/',
+  caseCounts: '/cases/counts/',
   caseDetail: (id: number) => `/cases/${id}/`,
   caseDetailFull: (id: number) => `/cases/${id}/detail/`,
   caseAnalyze: (id: number) => `/cases/${id}/analyze/`,
@@ -221,6 +226,9 @@ export const casesApi = {
 
   triggerOrinn: async (id: number) =>
     apiFetch<CaseOrinnAnalysis>(API_ENDPOINTS.caseAnalyze(id), { method: 'POST' }),
+
+  getCounts: async () =>
+    apiFetch<CaseCounts>(API_ENDPOINTS.caseCounts),
 };
 
 // PROFILE API
@@ -236,4 +244,20 @@ export const impactApi = {
 
   getMoments: async () =>
     apiFetch<ImpactMomentsResponse>(API_ENDPOINTS.impactMoments),
+};
+
+// EARNINGS API
+// Earnings are derived from completed CaseReview records.
+// No separate earnings model exists in backend — we use the completed cases list.
+export const earningsApi = {
+  getCompleted: async (params?: { page?: number; page_size?: number }) => {
+    const query = new URLSearchParams();
+    if (params?.page) query.set('page', String(params.page));
+    if (params?.page_size) query.set('page_size', String(params.page_size));
+    query.set('status', 'completed');
+    const qs = query.toString();
+    return apiFetch<CaseReviewListResponse>(
+      `${API_ENDPOINTS.caseList}${qs ? `?${qs}` : ''}`,
+    );
+  },
 };

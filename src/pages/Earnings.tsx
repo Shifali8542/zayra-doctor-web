@@ -1,90 +1,19 @@
 import { AppLayout } from '@/components/AppLayout';
 import { Card } from '@/components/Card';
-import { Button } from '@/components/Button';
-import { Icon } from '@/components/Icon';
 import { formatCurrency, cn } from '@/utils/format';
-import type { EarningsBySeverity, EarningsReviewRow } from '@/types';
-
-const mockEarningsSummary = { today: 0, thisWeek: 0, thisMonth: 0, pendingPayout: 0, nextSettlementLabel: 'Coming soon' };
-const mockEarningsBySeverity: EarningsBySeverity[] = [];
-const mockEarningsReviews: EarningsReviewRow[] = [];
-
-const SummaryTile = ({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: number;
-  accent?: boolean;
-}) => (
-  <div
-    className={cn(
-      'rounded-2xl p-5 transition',
-      accent
-        ? 'hero-gradient text-white shadow-card'
-        : 'border border-[var(--color-divider)] bg-[var(--color-surface)] text-[var(--color-text-primary)]',
-    )}
-  >
-    <p
-      className={cn(
-        'eyebrow mb-3 text-[11px] tracking-[1.4px]',
-        accent ? 'text-white/80' : 'text-[var(--color-text-tertiary)]',
-      )}
-    >
-      {label}
-    </p>
-    <p
-      className={cn(
-        'text-[28px] font-bold leading-[32px] lg:text-[32px] lg:leading-[36px]',
-        accent ? 'text-white' : 'text-[var(--color-text-primary)]',
-      )}
-    >
-      {formatCurrency(value)}
-    </p>
-  </div>
-);
-
-const SeverityBar = ({ row }: { row: EarningsBySeverity }) => (
-  <div>
-    <div className="mb-2 flex items-baseline justify-between">
-      <span className="text-[14px] text-[var(--color-text-primary)]">
-        {row.label}
-      </span>
-      <span className="text-[14px] font-bold text-[var(--color-text-primary)]">
-        {formatCurrency(row.amount)}
-      </span>
-    </div>
-    <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--color-divider)]">
-      <div
-        className="h-full rounded-full"
-        style={{
-          width: `${Math.min(100, Math.max(0, row.fillPct * 100))}%`,
-          backgroundImage:
-            'linear-gradient(90deg, var(--color-primary) 0%, var(--color-accent) 100%)',
-        }}
-      />
-    </div>
-  </div>
-);
-
-const statusClass = (status: EarningsReviewRow['status']) =>
-  status === 'Settled'
-    ? 'text-[var(--color-success)]'
-    : status === 'Pending'
-      ? 'text-[var(--color-warning)]'
-      : 'text-[var(--color-text-secondary)]';
-
-const severityDot = (sev: EarningsReviewRow['severity']) =>
-  sev === 'Critical'
-    ? 'bg-[var(--color-danger)]'
-    : sev === 'Urgent'
-      ? 'bg-[var(--color-warning)]'
-      : sev === 'Routine'
-        ? 'bg-[var(--color-success)]'
-        : 'bg-[var(--color-text-tertiary)]';
+import { useQuery } from '@tanstack/react-query';
+import { earningsApi, API_ENDPOINTS } from '@/services/api';
+import type { CaseReview } from '@/types';
+import { formatRelativeTime } from '@/utils/format';
 
 export const EarningsPage = () => {
+  const completedQ = useQuery({
+    queryKey: [API_ENDPOINTS.caseList, 'completed', 'earnings'],
+    queryFn: () => earningsApi.getCompleted({ page_size: 50 }),
+  });
+
+  const cases: CaseReview[] = completedQ.data?.results ?? [];
+
   return (
     <AppLayout>
       <div className="mt-4">
@@ -96,126 +25,62 @@ export const EarningsPage = () => {
         </p>
       </div>
 
-      {/* Summary tiles */}
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <SummaryTile label="TODAY" value={mockEarningsSummary.today} accent />
-        <SummaryTile label="THIS WEEK" value={mockEarningsSummary.thisWeek} />
-        <SummaryTile label="THIS MONTH" value={mockEarningsSummary.thisMonth} />
-        <SummaryTile
-          label="PENDING PAYOUT"
-          value={mockEarningsSummary.pendingPayout}
-        />
-      </div>
-
-      {/* By-severity + Next payout */}
-      <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-[1.6fr_1fr]">
-        <Card>
-          <h2 className="mb-5 text-[18px] font-bold text-[var(--color-text-primary)]">
-            Earnings by severity (30d)
-          </h2>
-          <div className="flex flex-col gap-5">
-            {mockEarningsBySeverity.map((row) => (
-              <SeverityBar key={row.key} row={row} />
-            ))}
-          </div>
-        </Card>
-
-        <div className="hero-gradient rounded-2xl p-6 lg:p-7">
-          <p className="text-[18px] font-bold text-white">Next payout</p>
-          <p className="mb-5 mt-1 text-[14px] text-white/80">
-            {mockEarningsSummary.nextSettlementLabel}
-          </p>
-          <p className="mb-6 text-[40px] font-bold leading-[44px] text-white">
-            {formatCurrency(mockEarningsSummary.pendingPayout)}
-          </p>
-          <Button
-            label="Withdraw to bank"
-            variant="glass"
-            size="lg"
-            iconLeft="arrow-down"
-            fullWidth
-          />
-        </div>
-      </div>
-
-      {/* Recent reviews */}
-      <Card className="mt-5 !p-0">
+      {/* Recent reviews — real completed cases from backend */}
+      <Card className="mt-6 !p-0">
         <div className="px-5 py-5 lg:px-6">
           <h2 className="text-[18px] font-bold text-[var(--color-text-primary)]">
-            Recent reviews
+            Completed reviews
           </h2>
+          <p className="mt-1 text-[13px] text-[var(--color-text-tertiary)]">
+            {completedQ.data?.count ?? 0} total completed cases
+          </p>
         </div>
 
-        {/* Header — desktop only */}
-        <div className="hidden border-b border-[var(--color-divider)] px-6 pb-3 lg:grid lg:grid-cols-[1.2fr_1fr_1fr_1fr_0.8fr]">
-          <span className="eyebrow text-[11px] tracking-[1.2px] text-[var(--color-text-tertiary)]">
-            CASE
-          </span>
-          <span className="eyebrow text-[11px] tracking-[1.2px] text-[var(--color-text-tertiary)]">
-            SEVERITY
-          </span>
-          <span className="eyebrow text-[11px] tracking-[1.2px] text-[var(--color-text-tertiary)]">
-            TIME
-          </span>
-          <span className="eyebrow text-[11px] tracking-[1.2px] text-[var(--color-text-tertiary)]">
-            STATUS
-          </span>
-          <span className="eyebrow text-right text-[11px] tracking-[1.2px] text-[var(--color-text-tertiary)]">
-            PAYOUT
-          </span>
+        {/* Header */}
+        <div className="hidden border-b border-[var(--color-divider)] px-6 pb-3 lg:grid lg:grid-cols-[1.2fr_2fr_1fr_1fr]">
+          {['CASE', 'DIAGNOSIS', 'SEVERITY', 'WHEN'].map((h) => (
+            <span key={h} className="eyebrow text-[11px] tracking-[1.2px] text-[var(--color-text-tertiary)]">
+              {h}
+            </span>
+          ))}
         </div>
 
-        {/* Rows */}
+        {completedQ.isLoading && (
+          <p className="px-6 py-8 text-[14px] text-[var(--color-text-tertiary)]">Loading…</p>
+        )}
+
         <div className="divide-y divide-[var(--color-divider)]">
-          {mockEarningsReviews.map((r) => (
+          {cases.map((c) => (
             <div
-              key={r.caseId}
-              className="grid grid-cols-2 gap-y-2 px-5 py-4 lg:grid-cols-[1.2fr_1fr_1fr_1fr_0.8fr] lg:items-center lg:gap-0 lg:px-6"
+              key={c.id}
+              className="grid grid-cols-2 gap-y-2 px-5 py-4 lg:grid-cols-[1.2fr_2fr_1fr_1fr] lg:items-center lg:gap-0 lg:px-6"
             >
-              {/* Case */}
-              <div className="lg:col-auto">
-                <p className="font-mono text-[13px] text-[var(--color-text-primary)]">
-                  {r.caseId}
-                </p>
-              </div>
-
-              {/* Severity */}
-              <div className="flex items-center gap-2 lg:col-auto">
-                <span
-                  className={cn('h-2 w-2 rounded-full', severityDot(r.severity))}
-                />
-                <span className="text-[14px] text-[var(--color-text-primary)]">
-                  {r.severity}
-                </span>
-              </div>
-
-              {/* Time */}
-              <div className="lg:col-auto">
-                <span className="text-[14px] text-[var(--color-text-secondary)]">
-                  {r.timeLabel}
-                </span>
-              </div>
-
-              {/* Status */}
-              <div className="lg:col-auto">
-                <span
-                  className={cn(
-                    'text-[14px] font-bold',
-                    statusClass(r.status),
-                  )}
-                >
-                  {r.status}
-                </span>
-              </div>
-
-              {/* Payout */}
-              <div className="text-right lg:col-auto">
-                <span className="text-[14px] font-bold text-[var(--color-text-primary)]">
-                  {formatCurrency(r.payoutUsd)}
-                </span>
-              </div>
+              <span className="font-mono text-[13px] text-[var(--color-text-tertiary)]">
+                {c.patient_code}
+              </span>
+              <span className="text-[14px] font-semibold text-[var(--color-text-primary)]">
+                {c.display_diagnosis || c.diagnosis || '—'}
+              </span>
+              <span className={cn(
+                'text-[13px] font-bold capitalize',
+                c.severity === 'critical' && 'text-[var(--color-danger)]',
+                c.severity === 'urgent' && 'text-[var(--color-warning)]',
+                c.severity === 'routine' && 'text-[var(--color-success)]',
+                c.severity === 'normal' && 'text-[var(--color-text-tertiary)]',
+              )}>
+                {c.severity}
+              </span>
+              <span className="text-[13px] text-[var(--color-text-secondary)]">
+                {formatRelativeTime(c.completed_at ?? c.created_at)}
+              </span>
             </div>
           ))}
+
+          {!completedQ.isLoading && cases.length === 0 && (
+            <p className="px-6 py-8 text-[14px] text-[var(--color-text-tertiary)]">
+              No completed cases yet.
+            </p>
+          )}
         </div>
       </Card>
     </AppLayout>

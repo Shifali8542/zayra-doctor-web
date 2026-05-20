@@ -26,6 +26,7 @@ export const TraceViewPage = () => {
     primarySamples,
     effectiveSamplingRate,
     segments,
+    waveformData,
     waveformLoading,
     records,
     totalRecords,
@@ -43,6 +44,9 @@ export const TraceViewPage = () => {
     annotation,
     setAnnotation,
     saveAnnotation,
+    selectedLead,
+    setSelectedLead,
+    availableLeads,
   } = useTraceView(caseIdNum);
 
   const hasWaveform = Boolean(primarySamples && primarySamples.length > 0);
@@ -55,7 +59,7 @@ export const TraceViewPage = () => {
           TraceView
         </h1>
         <p className="text-[14px] leading-[22px] text-[var(--color-text-secondary)]">
-          Case #{caseId}{patientId ? ` · Patient #${patientId}` : ''} · Lead II · {samplingRate} Hz
+          Case #{caseId}{waveformData?.patient_code ? ` · ${waveformData.patient_code}` : patientId ? ` · Patient #${patientId}` : ''} · Lead {selectedLead} · {samplingRate} Hz
           {recordName ? ` · ${recordName}` : ''}
         </p>
       </div>
@@ -73,6 +77,27 @@ export const TraceViewPage = () => {
         <ToolBtn icon="share" />
         <ToolBtn icon="book" />
       </div>
+
+      {/* Lead selector — shown when record has multiple leads */}
+      {availableLeads.length > 1 && (
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <span className="text-[12px] text-[var(--color-text-tertiary)]">Lead:</span>
+          {availableLeads.map((lead) => (
+            <button
+              key={lead}
+              onClick={() => setSelectedLead(lead)}
+              className={cn(
+                'rounded-pill border px-3 py-1 text-[12px] font-semibold transition',
+                selectedLead === lead
+                  ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-white'
+                  : 'border-[var(--color-divider)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] hover:border-[var(--color-primary)]',
+              )}
+            >
+              {lead}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Record tabs — shown when patient has multiple records */}
       {records.length > 1 && (
@@ -200,7 +225,7 @@ export const TraceViewPage = () => {
           {/* Full lead strip */}
           {hasWaveform && (
             <WaveformStrip
-              label={`FULL RECORDING · Lead II · ECG ${activeRecordIndex + 1} of ${totalRecords}`}
+              label={`FULL RECORDING · Lead ${selectedLead} · ECG ${activeRecordIndex + 1} of ${totalRecords}`}
             >
               {waveformLoading ? (
                 <WaveformPlaceholder height={130} />
@@ -275,16 +300,17 @@ export const TraceViewPage = () => {
   );
 };
 
-// ─── Sub-components ───────────────────────────────────────────────
-
+// Sub-components
 const WaveformStrip = ({
   label,
   highlighted,
   children,
+  lead = 'II',
 }: {
   label: string;
   highlighted?: boolean;
   children: ReactNode;
+  lead?: string;
 }) => (
   <div
     className={cn(
@@ -295,7 +321,7 @@ const WaveformStrip = ({
   >
     <div className="mb-2 flex justify-between">
       <span className="text-[11px] font-bold tracking-[1.2px] uppercase text-white/80">{label}</span>
-      <span className="text-[11px] tracking-[1.2px] text-white/50">II · 25MM/S</span>
+       <span className="text-[11px] tracking-[1.2px] text-white/50">{lead} · 25MM/S</span>
     </div>
     {children}
   </div>

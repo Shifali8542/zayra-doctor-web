@@ -1,9 +1,6 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { cn } from '@/utils/format';
-
-// =============================================================================
-// WaveformPlaceholder — lightweight skeleton shown while real data loads
-// =============================================================================
+import type { WaveformGrid } from '@/types';
 
 interface WaveformPlaceholderProps {
   height?: number;
@@ -23,57 +20,94 @@ export const WaveformPlaceholder = ({
   />
 );
 
-// =============================================================================
-// RealEcgWaveform — renders actual sample data from the backend
-// =============================================================================
-
-interface RealEcgWaveformProps {
-  /** Raw amplitude samples from the backend (mV values). */
-  samples: number[];
-  /** Effective sampling rate in Hz (from backend, e.g. 125 after downsample). */
-  effectiveSamplingRate?: number;
-  /** How many seconds of signal to display. Defaults to all. */
-  displaySeconds?: number;
-  height?: number;
-  className?: string;
-  showGrid?: boolean;
-  strokeColor?: string;
-  /** Minimum pixel width of the SVG (enables horizontal scroll). */
-  minWidth?: number;
+interface GridConfig {
+  smallBoxMs: number;
+  largeBoxMs: number;
+  smallBoxMv: number;
+  largeBoxMv: number;
+  pxPerMs: number;
+  pxPerMv: number;
+  svgWidth: number;
+  svgHeight: number;
 }
 
-/**
- * Converts a window of amplitude samples into an SVG polyline points string.
- * Normalises amplitude to fit the SVG height with 10% vertical padding.
- */
+function buildClinicalGrid(cfg: GridConfig): React.ReactElement {
+  const lines: React.ReactElement[] = [];
+  const smallStepX = cfg.pxPerMs * cfg.smallBoxMs;
+  const largeStepX = cfg.pxPerMs * cfg.largeBoxMs;
+
+  if (smallStepX > 2) {
+    let x = 0;
+    let idx = 0;
+    while (x <= cfg.svgWidth + 0.5) {
+      const isLarge = Math.abs(x % largeStepX) < 0.5 || Math.abs((x % largeStepX) - largeStepX) < 0.5;
+      lines.push(
+        <line
+          key={`vx-${idx}`}
+          x1={x} y1={0} x2={x} y2={cfg.svgHeight}
+          stroke={isLarge ? 'rgba(255,100,100,0.18)' : 'rgba(255,100,100,0.07)'}
+          strokeWidth={isLarge ? 0.7 : 0.4}
+        />,
+      );
+      x += smallStepX;
+      idx++;
+    }
+  }
+
+  const smallStepY = cfg.pxPerMv * cfg.smallBoxMv;
+  const largeStepY = cfg.pxPerMv * cfg.largeBoxMv;
+
+  if (smallStepY > 2) {
+    let y = 0;
+    let idx = 0;
+    while (y <= cfg.svgHeight + 0.5) {
+      const isLarge = Math.abs(y % largeStepY) < 0.5 || Math.abs((y % largeStepY) - largeStepY) < 0.5;
+      lines.push(
+        <line
+          key={`hy-${idx}`}
+          x1={0} y1={y} x2={cfg.svgWidth} y2={y}
+          stroke={isLarge ? 'rgba(255,100,100,0.18)' : 'rgba(255,100,100,0.07)'}
+          strokeWidth={isLarge ? 0.7 : 0.4}
+        />,
+      );
+      y += smallStepY;
+      idx++;
+    }
+  }
+
+  return <g>{lines}</g>;
+}
+
 function samplesToPath(
   samples: number[],
   svgWidth: number,
   svgHeight: number,
+  pxPerMv: number,
 ): string {
   if (samples.length === 0) return '';
-
-  const padding = svgHeight * 0.1;
-  const drawH = svgHeight - padding * 2;
-
-  let min = samples[0];
-  let max = samples[0];
-  for (const s of samples) {
-    if (s < min) min = s;
-    if (s > max) max = s;
-  }
-
-  const range = max - min || 1;
+  const sorted = [...samples].sort((a, b) => a - b);
+  const median = sorted[Math.floor(sorted.length / 2)];
+  const halfRange = svgHeight / (2 * pxPerMv);
+  const minVal = median - halfRange;
   const xStep = svgWidth / (samples.length - 1 || 1);
-
   const points = samples.map((s, i) => {
     const x = i * xStep;
-    // Invert: high amplitude → top of SVG
-    const y = padding + drawH - ((s - min) / range) * drawH;
-    return `${x.toFixed(2)},${y.toFixed(2)}`;
+    const y = svgHeight - ((s - minVal) * pxPerMv);
+    const yc = Math.max(0, Math.min(svgHeight, y));
+    return `${x.toFixed(2)},${yc.toFixed(2)}`;
   });
-
   return points.join(' ');
+}
+
+interface RealEcgWaveformProps {
+  samples: number[];
+  effectiveSamplingRate?: number;
+  displaySeconds?: number;
+  height?: number;
+  className?: string;
+  strokeColor?: string;
+  minWidth?: number;
+  grid?: WaveformGrid;
 }
 
 export const RealEcgWaveform = ({
@@ -82,9 +116,9 @@ export const RealEcgWaveform = ({
   displaySeconds,
   height = 130,
   className,
-  showGrid = true,
-  strokeColor = '#E0F4F0',
+  strokeColor = '#4EECD8',
   minWidth,
+  grid,
 }: RealEcgWaveformProps) => {
   const ref = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -99,68 +133,68 @@ export const RealEcgWaveform = ({
     return () => obs.disconnect();
   }, []);
 
-  // Slice to displaySeconds if provided
   const visibleSamples = useMemo(() => {
     if (!displaySeconds) return samples;
     const maxSamples = Math.round(effectiveSamplingRate * displaySeconds);
     return samples.slice(0, maxSamples);
   }, [samples, displaySeconds, effectiveSamplingRate]);
 
-  const width = Math.max(containerWidth, minWidth ?? 0);
+  const svgWidth = Math.max(containerWidth, minWidth ?? 0);
+  const durationMs = (visibleSamples.length / effectiveSamplingRate) * 1000;
+  const pxPerMs = svgWidth > 0 && durationMs > 0 ? svgWidth / durationMs : 0;
+  const pxPerMv = height / 3;
 
-  const points = useMemo(() => {
-    if (!width || visibleSamples.length === 0) return '';
-    return samplesToPath(visibleSamples, width, height);
-  }, [visibleSamples, width, height]);
-
-  const gridLines = useMemo(() => {
-    if (!showGrid || !width) return null;
+  const gridEl = useMemo(() => {
+    if (!svgWidth || !pxPerMs) return null;
+    if (grid) {
+      return buildClinicalGrid({
+        smallBoxMs: grid.small_box_ms,
+        largeBoxMs: grid.large_box_ms,
+        smallBoxMv: grid.small_box_mv,
+        largeBoxMv: grid.large_box_mv,
+        pxPerMs,
+        pxPerMv,
+        svgWidth,
+        svgHeight: height,
+      });
+    }
     const lines: React.ReactElement[] = [];
     const step = 16;
-    for (let x = 0; x <= width; x += step) {
-      lines.push(
-        <line
-          key={`vx-${x}`}
-          x1={x} y1={0} x2={x} y2={height}
-          stroke="rgba(255,255,255,0.04)"
-          strokeWidth={1}
-        />,
-      );
+    for (let x = 0; x <= svgWidth; x += step) {
+      lines.push(<line key={`vx-${x}`} x1={x} y1={0} x2={x} y2={height} stroke="rgba(255,255,255,0.04)" strokeWidth={0.5} />);
     }
     for (let y = 0; y <= height; y += step) {
-      lines.push(
-        <line
-          key={`hy-${y}`}
-          x1={0} y1={y} x2={width} y2={y}
-          stroke="rgba(255,255,255,0.04)"
-          strokeWidth={1}
-        />,
-      );
+      lines.push(<line key={`hy-${y}`} x1={0} y1={y} x2={svgWidth} y2={y} stroke="rgba(255,255,255,0.04)" strokeWidth={0.5} />);
     }
     return <g>{lines}</g>;
-  }, [showGrid, width, height]);
+  }, [grid, svgWidth, height, pxPerMs, pxPerMv]);
+
+  const points = useMemo(() => {
+    if (!svgWidth || visibleSamples.length === 0) return '';
+    return samplesToPath(visibleSamples, svgWidth, height, pxPerMv);
+  }, [visibleSamples, svgWidth, height, pxPerMv]);
 
   return (
     <div
       ref={ref}
       className={cn('overflow-hidden rounded-lg', className)}
-      style={{ height, backgroundColor: '#0E1B2C', minWidth: minWidth }}
+      style={{ height, backgroundColor: '#0A1628', minWidth }}
     >
       {containerWidth > 0 && visibleSamples.length > 0 ? (
-        <svg width={width} height={height}>
-          <rect x={0} y={0} width={width} height={height} fill="#0E1B2C" />
-          {gridLines}
+        <svg width={svgWidth} height={height}>
+          <rect x={0} y={0} width={svgWidth} height={height} fill="#0A1628" />
+          {gridEl}
           <polyline
             points={points}
             stroke={strokeColor}
-            strokeWidth={1.6}
+            strokeWidth={1.5}
             fill="none"
             strokeLinejoin="round"
             strokeLinecap="round"
           />
         </svg>
       ) : (
-        <div className="h-full w-full animate-pulse bg-[#0E1B2C]" />
+        <div className="h-full w-full animate-pulse bg-[#0A1628]" />
       )}
     </div>
   );

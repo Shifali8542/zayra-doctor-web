@@ -1,10 +1,7 @@
 export type Severity = 'CRITICAL' | 'URGENT' | 'ROUTINE';
-
 export type CaseStatus = 'live' | 'claimed' | 'completed' | 'missed' | 'escalated';
-
 export type CaseSeverity = 'normal' | 'routine' | 'urgent' | 'critical';
 
-// Matches exact backend CaseReview serializer fields
 export interface CaseReview {
   id: number;
   status: CaseStatus;
@@ -35,7 +32,6 @@ export interface CaseReviewListResponse {
   results: CaseReview[];
 }
 
-// Matches GET /cases/:id/detail/ response exactly
 export interface CaseVitals {
   heart_rate_bpm: number | null;
   heart_rate_min: number | null;
@@ -159,101 +155,12 @@ export interface CaseMetric {
   delta?: string;
 }
 
-export interface Case {
-  id: string;
-  caseId: string; // e.g. ZC-48217
-  severity: Severity;
-  anomaly: string;
-  patientSex: 'M' | 'F';
-  patientAge: number;
-  patientId: string; // e.g. P-A1842
-  hr: number;
-  hrDelta?: number;
-  spo2: number;
-  confidence: number;
-  signalQ: string; // e.g. Q92
-  viewing: number;
-  ageMinutes: number; // minutes since detection
-  status: CaseStatus;
-  hrv?: number;
-}
-
-export interface DoctorStats {
-  avgResponseSec: number;
-  todayEarningsUsd: number;
-  confidencePct: number;
-  streakDays: number;
-}
-
-export interface TimelineEvent {
-  when: string; // 'NOW', '-6H', '-2D', '-9D'
-  description: string;
-}
-
 export interface AlynaMessage {
   id: string;
   role: 'user' | 'assistant';
   text: string;
   confidence?: number;
   tags?: string[];
-}
-
-export interface PatientContext {
-  sex: 'M' | 'F';
-  age: number;
-  comorbidities: string;
-  adherencePct: number;
-  activity: string;
-  sleep: string;
-  dietPattern: string;
-  smokingAlcohol: string;
-}
-
-export interface PhysiologySnapshot {
-  pulse: { value: number; baseline: number };
-  hrv: { value: number; baseline: number; unit: string };
-  spo2: { value: number; baseline: number };
-  recovery: 'Low' | 'Moderate' | 'High';
-  recoveryNote: string;
-}
-
-export interface ImpactStats {
-  rankPct: number;
-  totalDoctors: number;
-  reviewed: number;
-  escalations: number;
-  avgResponseSec: number;
-  streakDays: number;
-  decisionConfidence: number;
-  reliability: number;
-}
-
-export interface LifesavingMoment {
-  when: string;
-  description: string;
-}
-
-export interface DoctorProfile {
-  name: string;
-  initials: string;
-  specialty: string;
-  experienceYears: number;
-  city: string;
-  licenseVerified: boolean;
-  languages: string[];
-  available: boolean;
-  emergencyOnly: boolean;
-  workingHours: string;
-  severityFilters: string;
-}
-
-export interface AnomalyDetails {
-  rate: number;
-  qrsWidth: number;
-  qt: number;
-  qtc: number;
-  axis: number;
-  bookmarks: { label: string; offset: string }[];
 }
 
 // AUTH
@@ -305,70 +212,27 @@ export interface AuthTokens {
 // THEME
 export type ThemeMode = 'light' | 'dark';
 
-// ECG ATLAS
-export type AtlasDifficulty = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
-
-export interface AtlasCase {
-  id: string;
-  title: string;
-  description?: string;
-  category: string;
-  durationMin: number;
-  difficulty: AtlasDifficulty;
-  patientMeta: string;       // e.g. "Anonymized · 58F · ambulatory · lead V2"
-  tags: string[];            // e.g. ['STEMI', 'POSTERIOR', '4 MIN', 'INTERMEDIATE']
-  isFeatured?: boolean;
+// EARNINGS — derived from completed CaseReview records
+export interface EarningsRow {
+  case_id: number;
+  patient_code: string;
+  severity: CaseSeverity;
+  completed_at: string | null;
+  notes: string | null;
 }
 
-export interface AtlasStats {
-  accuracyPct: number;
-  solved: number;
+export interface EarningsResponse {
+  count: number;
+  results: EarningsRow[];
 }
 
-// =============================================================================
-// GRAND ROUNDS
-// =============================================================================
-
-export interface GrandRoundsThread {
-  id: string;
-  authorName: string;
-  authorInitials: string;
-  authorSpecialty: string;
-  postedRelative: string;    // e.g. "3h", "9h", "1d"
-  title: string;
-  replies: number;
-  saved: number;
-}
-
-// =============================================================================
-// EARNINGS
-// =============================================================================
-
-export type EarningsSeverityKey = 'critical' | 'urgent' | 'routine' | 'info';
-
-export interface EarningsSummary {
-  today: number;
-  thisWeek: number;
-  thisMonth: number;
-  pendingPayout: number;
-  nextSettlementLabel: string;
-}
-
-export interface EarningsBySeverity {
-  key: EarningsSeverityKey;
-  label: string;
-  amount: number;
-  fillPct: number;
-}
-
-export type EarningsStatus = 'Settled' | 'Pending' | 'Processing';
-
-export interface EarningsReviewRow {
-  caseId: string;
-  severity: 'Critical' | 'Urgent' | 'Routine' | 'Info';
-  timeLabel: string; 
-  status: EarningsStatus;
-  payoutUsd: number;
+// CASE COUNTS 
+export interface CaseCounts {
+  live: number;
+  claimed: number;
+  completed: number;
+  missed: number;
+  escalated: number;
 }
 
 // WAVEFORM
@@ -393,10 +257,6 @@ export interface WaveformSegments {
   after: WaveformSegment;
 }
 
-/**
- * Exact response from GET /patients/:id/waveform/
- * waveforms is a dict keyed by channel name e.g. { "II": [0.1, 0.2, ...] }
- */
 export interface PatientWaveformResponse {
   patient_code: string;
   record_id: number;
@@ -441,15 +301,28 @@ export interface RecordsIndexResponse {
   records: RecordsIndexRecord[];
 }
 
-/**
- * Waveform analysis response from GET /patients/:id/waveform-analysis/
- */
+// WaveformAnalysisResponse
 export interface WaveformAnalysisResponse {
-  patient_id?: number;
+  patient_code?: string;
   record_name?: string;
+  lead_analyzed?: string;
+  sampling_rate?: number;
   heart_rate_bpm: number | null;
   hrv_ms: number | null;
   rhythm: string | null;
   quality_score: number | null;
   num_beats: number | null;
+  wave_counts?: {
+    P?: number;
+    Q?: number;
+    R?: number;
+    S?: number;
+    T?: number;
+    error?: string;
+  };
+  wave_intervals?: {
+    pr_interval_ms: number | null;
+    qrs_duration_ms: number | null;
+    qt_interval_ms: number | null;
+  };
 }

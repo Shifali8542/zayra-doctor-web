@@ -241,6 +241,7 @@ export const ClaimDetailPage = () => {
             effectiveSamplingRate={waveformQ.data?.effective_sampling_rate ?? 125}
             height={160}
             className="mt-2"
+            grid={waveformQ.data?.grid}
           />
         )}
         {!waveformQ.isLoading && !primarySamples && (

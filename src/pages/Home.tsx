@@ -6,19 +6,6 @@ import { CaseCard } from '@/components/CaseCard';
 import { useDashboard } from '@/hooks/useDashboard';
 import { cn } from '@/utils/format';
 
-const MiniHeartbeat = () => (
-  <svg width={36} height={120} viewBox="0 0 36 120" fill="none">
-    <polyline
-      points="2,60 8,60 12,30 16,90 20,50 24,60 34,60"
-      stroke="rgba(255,255,255,0.45)"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      fill="none"
-    />
-  </svg>
-);
-
 export const HomePage = () => {
   const navigate = useNavigate();
   const { profile, patientCount, liveCases, liveCount, claimCase, isClaiming } = useDashboard();
@@ -29,7 +16,6 @@ export const HomePage = () => {
     <AppLayout>
       {/* Hero */}
       <div className="hero-gradient relative my-3 mb-6 overflow-hidden rounded-2xl p-6 lg:my-0 lg:p-10">
-        {/* Animated ECG line — runs across the top portion of the card */}
         <div className="pointer-events-none absolute left-0 right-0 top-0 h-[140px] overflow-hidden lg:h-[180px]">
           <svg
             viewBox="0 0 600 120"
