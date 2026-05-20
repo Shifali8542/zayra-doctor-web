@@ -1,5 +1,5 @@
 import type { User, LoginCredentials, SignupCredentials, CaseStatus, CaseSeverity, CaseReview, CaseReviewListResponse, CaseDetail, CaseOrinnAnalysis, 
-  ImpactStats, ImpactMomentsResponse,
+  ImpactStats, ImpactMomentsResponse, PatientWaveformResponse, WaveformAnalysisResponse, RecordsIndexResponse,
 } from '@/types';
 
 // CONFIG
@@ -53,6 +53,7 @@ export const API_ENDPOINTS = {
   patientDetail: (id: number) => `/patients/${id}/`,
   patientRecords: (id: number) => `/patients/${id}/records/`,
   patientWaveform: (id: number) => `/patients/${id}/waveform/`,
+  patientRecordsIndex: (id: number) => `/patients/${id}/records/index/`,
   patientClinicalInfo: (id: number) => `/patients/${id}/clinical-info/`,
   patientReport: (id: number) => `/patients/${id}/report/`,
   patientWaveformAnalysis: (id: number) => `/patients/${id}/waveform-analysis/`,
@@ -140,8 +141,22 @@ export const patientApi = {
   getRecords: async (id: number) =>
     apiFetch<{ patient_code: string; count: number; records: unknown[] }>(API_ENDPOINTS.patientRecords(id)),
 
-  getWaveform: async (id: number) =>
-    apiFetch<unknown>(API_ENDPOINTS.patientWaveform(id)),
+  getWaveform: async (
+    id: number,
+    opts?: { record_id?: number; channels?: string; downsample?: number },
+  ) => {
+    const query = new URLSearchParams();
+    if (opts?.record_id) query.set('record_id', String(opts.record_id));
+    if (opts?.channels)  query.set('channels',  opts.channels);
+    if (opts?.downsample) query.set('downsample', String(opts.downsample));
+    const qs = query.toString();
+    return apiFetch<PatientWaveformResponse>(
+      `${API_ENDPOINTS.patientWaveform(id)}${qs ? `?${qs}` : ''}`,
+    );
+  },
+
+  getRecordsIndex: async (id: number) =>
+    apiFetch<RecordsIndexResponse>(API_ENDPOINTS.patientRecordsIndex(id)),
 
   getClinicalInfo: async (id: number) =>
     apiFetch<unknown>(API_ENDPOINTS.patientClinicalInfo(id)),
@@ -153,7 +168,7 @@ export const patientApi = {
     apiFetch<unknown>(API_ENDPOINTS.datasetOverview),
 
   getWaveformAnalysis: async (id: number) =>
-    apiFetch<unknown>(API_ENDPOINTS.patientWaveformAnalysis(id)),
+    apiFetch<WaveformAnalysisResponse>(API_ENDPOINTS.patientWaveformAnalysis(id)),
 
   getWaveformAnnotations: async (id: number) =>
     apiFetch<unknown>(API_ENDPOINTS.patientWaveformAnnotations(id)),

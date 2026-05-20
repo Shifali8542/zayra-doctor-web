@@ -5,14 +5,15 @@ import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
 import { MetricCard } from '@/components/MetricCard';
 import { Icon, type IconName } from '@/components/Icon';
-import { EcgWaveform } from '@/components/Waveform';
+import { RealEcgWaveform, WaveformPlaceholder } from '@/components/Waveform';
 import { SeverityBadge } from '@/components/SeverityBadge';
 import { useClaim } from '@/hooks/useClaim';
 import { cn, formatRelativeTime } from '@/utils/format';
-import type { CaseHistoryEvent, CaseEcgRecord } from '@/types';
+import { useQuery } from '@tanstack/react-query';
+import { patientApi, API_ENDPOINTS } from '@/services/api';
+import type { CaseHistoryEvent, CaseEcgRecord, PatientWaveformResponse } from '@/types';
 
 // Sub-components
-
 const Row = ({ label, value, last }: { label: string; value: string; last?: boolean }) => (
   <div className={cn('flex items-start py-3', !last && 'border-b border-[var(--color-divider)]')}>
     <span className="flex-1 text-[14px] text-[var(--color-text-secondary)]">{label}</span>
@@ -94,6 +95,26 @@ export const ClaimDetailPage = () => {
 
   const [notes, setNotes] = useState('');
 
+  // Fetch real waveform once we have the patient id from the case detail
+  const patientIdFromDetail = detail?.patient?.id;
+  const waveformQ = useQuery<PatientWaveformResponse>({
+    queryKey: [API_ENDPOINTS.patientWaveform(patientIdFromDetail ?? 0)],
+    queryFn: () => patientApi.getWaveform(patientIdFromDetail!, {
+      downsample: 8,
+      channels: 'II',
+    }),
+    enabled: Boolean(patientIdFromDetail),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Pick best channel from waveforms dict (prefer 'II', fall back to first)
+  const primarySamples = waveformQ.data?.waveforms
+    ? (waveformQ.data.waveforms['II']
+        ?? waveformQ.data.waveforms['ii']
+        ?? Object.values(waveformQ.data.waveforms)[0]
+        ?? null)
+    : null;
+
   if (isLoading) {
     return (
       <AppLayout>
@@ -112,11 +133,6 @@ export const ClaimDetailPage = () => {
 
   const { case: c, patient, vitals, records, orinn, history } = detail;
 
-  // Seed waveform from patient_code so same patient = same waveform shape
-  const waveformSeed = patient.patient_code
-    .split('')
-    .reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
-
   const isClaimed = c.status === 'claimed';
 
   return (
@@ -130,7 +146,7 @@ export const ClaimDetailPage = () => {
         Back to Cases
       </button>
 
-      {/* ── Case header ─────────────────────────────────────────────────────── */}
+      {/* Case header */}
       <Card className="mb-5">
         <div className="mb-3 flex items-center gap-3">
           <SeverityBadge severity={c.severity} />
@@ -216,12 +232,22 @@ export const ClaimDetailPage = () => {
             Inspect in TraceView →
           </button>
         </div>
-        <EcgWaveform
-          severity={c.severity === 'critical' ? 'critical' : c.severity === 'urgent' ? 'urgent' : 'normal'}
-          height={160}
-          seed={waveformSeed}
-          className="mt-2"
-        />
+        {waveformQ.isLoading && (
+          <WaveformPlaceholder height={160} className="mt-2" />
+        )}
+        {!waveformQ.isLoading && primarySamples && (
+          <RealEcgWaveform
+            samples={primarySamples}
+            effectiveSamplingRate={waveformQ.data?.effective_sampling_rate ?? 125}
+            height={160}
+            className="mt-2"
+          />
+        )}
+        {!waveformQ.isLoading && !primarySamples && (
+          <p className="mt-3 text-[13px] text-[var(--color-text-tertiary)]">
+            Waveform not available for this record.
+          </p>
+        )}
         <div className="mt-3 flex justify-between text-[12px] text-[var(--color-text-tertiary)]">
           <span>Record: {records.find((r) => r.is_current)?.record_name ?? records[0]?.record_name ?? '—'}</span>
           <span>Lead II · 25mm/s · 10mm/mV</span>
@@ -305,7 +331,7 @@ export const ClaimDetailPage = () => {
         {Boolean(patient.extra_info?.smoker) && (
           <Row label="Smoker" value={String(patient.extra_info.smoker)} />
         )}
-        <Row label="All diagnoses" value={patient.all_diagnoses.join(', ') || '—'} last />
+        <Row label="All diagnoses" value={patient.display_diagnosis || patient.all_diagnoses.join(', ') || '—'} last />
       </Card>
 
       {/* ── Physiology snapshot ────────────────────────────────────────────── */}

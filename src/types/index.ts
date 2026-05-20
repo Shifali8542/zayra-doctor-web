@@ -351,14 +351,13 @@ export interface EarningsSummary {
   thisWeek: number;
   thisMonth: number;
   pendingPayout: number;
-  nextSettlementLabel: string; // e.g. "Settlement on Friday"
+  nextSettlementLabel: string;
 }
 
 export interface EarningsBySeverity {
   key: EarningsSeverityKey;
   label: string;
   amount: number;
-  // 0..1 fill (amount / max in the set)
   fillPct: number;
 }
 
@@ -370,4 +369,87 @@ export interface EarningsReviewRow {
   timeLabel: string; 
   status: EarningsStatus;
   payoutUsd: number;
+}
+
+// WAVEFORM
+export interface WaveformGrid {
+  paper_speed_mm_per_sec: number;
+  amplitude_mm_per_mv: number;
+  small_box_ms: number;
+  large_box_ms: number;
+  small_box_mv: number;
+  large_box_mv: number;
+}
+
+export interface WaveformSegment {
+  samples: number[];
+  start_sec: number;
+  end_sec: number;
+}
+
+export interface WaveformSegments {
+  before: WaveformSegment;
+  anomaly: WaveformSegment;
+  after: WaveformSegment;
+}
+
+/**
+ * Exact response from GET /patients/:id/waveform/
+ * waveforms is a dict keyed by channel name e.g. { "II": [0.1, 0.2, ...] }
+ */
+export interface PatientWaveformResponse {
+  patient_code: string;
+  record_id: number;
+  record_name: string;
+  record_index: number;
+  total_records: number;
+  diagnosis: string | null;
+  dataset_source: string | null;
+  dataset_source_display: string | null;
+  age: number | null;
+  sex: string | null;
+  sampling_rate: number;
+  effective_sampling_rate: number;
+  num_samples: number;
+  duration_seconds: number | null;
+  channel_names: string[];
+  units: string[];
+  waveforms: Record<string, number[]>;        // { "II": [...], "V1": [...] }
+  segments: Partial<WaveformSegments>;         // before / anomaly / after
+  grid: WaveformGrid;
+  recommended_display_seconds: number;
+}
+
+/** Records index — lightweight list, no S3 */
+export interface RecordsIndexRecord {
+  id: number;
+  record_index: number;
+  record_name: string;
+  label: string;
+  duration_seconds: number | null;
+  sampling_rate: number | null;
+  num_channels: number | null;
+  channel_names: string[];
+}
+
+export interface RecordsIndexResponse {
+  patient_id: number;
+  patient_code: string;
+  dataset_source: string | null;
+  dataset_source_display: string | null;
+  total_records: number;
+  records: RecordsIndexRecord[];
+}
+
+/**
+ * Waveform analysis response from GET /patients/:id/waveform-analysis/
+ */
+export interface WaveformAnalysisResponse {
+  patient_id?: number;
+  record_name?: string;
+  heart_rate_bpm: number | null;
+  hrv_ms: number | null;
+  rhythm: string | null;
+  quality_score: number | null;
+  num_beats: number | null;
 }

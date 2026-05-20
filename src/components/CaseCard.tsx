@@ -22,11 +22,6 @@ export const CaseCard = ({
   isClaiming = false,
   showClaim = true,
 }: Props) => {
-  // Seed waveform from patient_code string so same patient always gets same waveform
-  const seed = caseItem.patient_code
-    .split('')
-    .reduce((acc, c) => acc + c.charCodeAt(0), 0);
-
   return (
     <Card
       className="transition hover:shadow-[0_8px_24px_rgba(10,37,64,0.08)]"
@@ -60,8 +55,8 @@ export const CaseCard = ({
         {caseItem.sex ?? '—'} · {caseItem.age ?? '—'}y · {caseItem.patient_code}
       </p>
 
-      {/* ECG waveform strip — seeded by patient_code */}
-      <WaveformPlaceholder seed={seed} className="mb-4" />
+      {/* ECG skeleton — real waveform is available in TraceView and ClaimDetail */}
+      <WaveformPlaceholder className="mb-4" />
 
       {/* Metrics — real HR + HRV + confidence from backend */}
       <div className="mb-4 flex gap-2">
