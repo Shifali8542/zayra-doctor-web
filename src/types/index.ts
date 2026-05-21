@@ -302,6 +302,21 @@ export interface RecordsIndexResponse {
   records: RecordsIndexRecord[];
 }
 
+// TraceView case picker summary — lightweight, from case list API
+export interface TraceViewCase {
+  id: number;
+  severity: CaseSeverity;
+  status: CaseStatus;
+  patient_code: string;
+  age: number | null;
+  sex: string | null;
+  display_diagnosis: string;
+  dataset_source_display: string;
+  record_name: string;
+  heart_rate_bpm: number | null;
+  created_at: string;
+}
+
 // WaveformAnalysisResponse
 export interface WaveformAnalysisResponse {
   patient_code?: string;

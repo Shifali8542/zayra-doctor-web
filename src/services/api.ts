@@ -172,8 +172,12 @@ export const patientApi = {
   getDatasetOverview: async () =>
     apiFetch<unknown>(API_ENDPOINTS.datasetOverview),
 
-  getWaveformAnalysis: async (id: number) =>
-    apiFetch<WaveformAnalysisResponse>(API_ENDPOINTS.patientWaveformAnalysis(id)),
+  getWaveformAnalysis: async (id: number, recordId?: number) => {
+    const qs = recordId ? `?record_id=${recordId}` : '';
+    return apiFetch<WaveformAnalysisResponse>(
+      `${API_ENDPOINTS.patientWaveformAnalysis(id)}${qs}`,
+    );
+  },
 
   getWaveformAnnotations: async (id: number) =>
     apiFetch<unknown>(API_ENDPOINTS.patientWaveformAnnotations(id)),
