@@ -138,14 +138,15 @@ export const TraceViewPage = () => {
         </>
       )}
 
-      {/* Waveform strips — shown once patient is resolved */}
+      {/* Waveform strips */}
       {!isLoading && (
         <>
           {/* BEFORE segment */}
           <WaveformStrip
             label={segments.before
               ? `BEFORE · ${segments.before.start_sec}s – ${segments.before.end_sec}s`
-              : 'BEFORE · Lead II'}
+              : `BEFORE · Lead ${selectedLead}`}
+            lead={selectedLead}
           >
             {waveformLoading ? (
               <WaveformPlaceholder height={130} />
@@ -154,6 +155,7 @@ export const TraceViewPage = () => {
                 samples={segments.before.samples}
                 effectiveSamplingRate={effectiveSamplingRate}
                 height={130}
+                grid={waveformData?.grid}
               />
             ) : primarySamples ? (
               <RealEcgWaveform
@@ -181,6 +183,7 @@ export const TraceViewPage = () => {
                 effectiveSamplingRate={effectiveSamplingRate}
                 height={130}
                 strokeColor="#FF6E7A"
+                grid={waveformData?.grid}
               />
             ) : primarySamples ? (
               <RealEcgWaveform
@@ -210,6 +213,7 @@ export const TraceViewPage = () => {
                 samples={segments.after.samples}
                 effectiveSamplingRate={effectiveSamplingRate}
                 height={130}
+                grid={waveformData?.grid}
               />
             ) : primarySamples ? (
               <RealEcgWaveform
@@ -237,6 +241,7 @@ export const TraceViewPage = () => {
                     displaySeconds={10 * zoom}
                     height={130}
                     minWidth={600}
+                    grid={waveformData?.grid}
                   />
                 </div>
               )}

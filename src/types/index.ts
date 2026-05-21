@@ -273,9 +273,10 @@ export interface PatientWaveformResponse {
   num_samples: number;
   duration_seconds: number | null;
   channel_names: string[];
+  all_channel_names: string[];
   units: string[];
-  waveforms: Record<string, number[]>;        // { "II": [...], "V1": [...] }
-  segments: Partial<WaveformSegments>;         // before / anomaly / after
+  waveforms: Record<string, number[]>;
+  segments: Partial<WaveformSegments>;
   grid: WaveformGrid;
   recommended_display_seconds: number;
 }
