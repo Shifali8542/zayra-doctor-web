@@ -2,13 +2,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { casesApi, API_ENDPOINTS } from '@/services/api';
 
 // caseId here = CaseReview.id (not patient id)
-export const useClaim = (caseId?: number) => {
+export const useClaim = (caseId?: number, recordId?: number | null) => {
   const queryClient = useQueryClient();
 
   // Single call — gets everything for the detail page
   const detailQ = useQuery({
-    queryKey: [API_ENDPOINTS.caseDetailFull(caseId ?? 0)],
-    queryFn: () => casesApi.getDetailFull(caseId!),
+    queryKey: [API_ENDPOINTS.caseDetailFull(caseId ?? 0), recordId],
+    queryFn: () => casesApi.getDetailFull(caseId!, recordId ?? undefined),
     enabled: Boolean(caseId),
   });
 

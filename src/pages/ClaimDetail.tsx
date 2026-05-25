@@ -81,7 +81,10 @@ const ActionPathButton = ({
 export const ClaimDetailPage = () => {
   const navigate = useNavigate();
   const { caseId } = useParams<{ caseId: string }>();
-  const caseIdNum = caseId ? Number(caseId) : undefined;
+ const caseIdNum = caseId ? Number(caseId) : undefined;
+
+  const [notes, setNotes] = useState('');
+  const [selectedRecordId, setSelectedRecordId] = useState<number | null>(null);
 
   const {
     detail,
@@ -91,11 +94,8 @@ export const ClaimDetailPage = () => {
     triggerOrinn,
     isActioning,
     isAnalyzing,
-  } = useClaim(caseIdNum);
-
-  const [notes, setNotes] = useState('');
-  const [selectedRecordId, setSelectedRecordId] = useState<number | null>(null);
-
+ } = useClaim(caseIdNum, selectedRecordId);
+ 
   // Set the initial selected record when case details load
   useEffect(() => {
     if (detail?.records && detail.records.length > 0 && !selectedRecordId) {

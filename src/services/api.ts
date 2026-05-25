@@ -225,8 +225,10 @@ export const casesApi = {
       body: JSON.stringify({ notes }),
     }),
 
-  getDetailFull: async (id: number) =>
-    apiFetch<CaseDetail>(API_ENDPOINTS.caseDetailFull(id)),
+  getDetailFull: async (id: number, recordId?: number) => {
+    const url = API_ENDPOINTS.caseDetailFull(id);
+    return apiFetch<CaseDetail>(recordId ? `${url}?record_id=${recordId}` : url);
+  },
 
   triggerOrinn: async (id: number, recordId?: number) =>
     apiFetch<CaseOrinnAnalysis>(API_ENDPOINTS.caseAnalyze(id), {
