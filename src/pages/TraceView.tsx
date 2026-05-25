@@ -314,7 +314,7 @@ export const TraceViewPage = () => {
             </>
           )}
 
-          {/* ── Strip view ────────────────────────────────────────────────── */}
+          {/* Strip view */}
           {viewMode === 'strip' && (
             <>
               {/* Before */}
@@ -328,13 +328,17 @@ export const TraceViewPage = () => {
               >
                 {waveformLoading ? (
                   <WaveformPlaceholder height={120} />
-                ) : segments.before?.samples?.length ? (
-                  <RealEcgWaveform
-                    samples={segments.before.samples}
-                    effectiveSamplingRate={effectiveSamplingRate}
-                    height={120}
-                    grid={waveformData?.grid}
-                  />
+                ) : segments.before ? (
+                  segments.before.samples.length > 0 ? (
+                    <RealEcgWaveform
+                      samples={primarySamples ? primarySamples.slice(Math.floor(segments.before.start_sec * effectiveSamplingRate), Math.ceil(segments.before.end_sec * effectiveSamplingRate)) : []}
+                      effectiveSamplingRate={effectiveSamplingRate}
+                      height={120}
+                      grid={waveformData?.grid}
+                    />
+                  ) : (
+                    <NoSignal message="No pre-anomaly data available. Anomaly started at the beginning of the recording." />
+                  )
                 ) : primarySamples ? (
                   <RealEcgWaveform
                     samples={primarySamples.slice(0, Math.floor(primarySamples.length / 3))}
@@ -360,7 +364,7 @@ export const TraceViewPage = () => {
                   <WaveformPlaceholder height={120} />
                 ) : segments.anomaly?.samples?.length ? (
                   <RealEcgWaveform
-                    samples={segments.anomaly.samples}
+                    samples={primarySamples ? primarySamples.slice(Math.floor(segments.anomaly.start_sec * effectiveSamplingRate), Math.ceil(segments.anomaly.end_sec * effectiveSamplingRate)) : []}
                     effectiveSamplingRate={effectiveSamplingRate}
                     height={120}
                     strokeColor="#FF6E7A"
@@ -381,7 +385,7 @@ export const TraceViewPage = () => {
                 )}
               </WaveformStrip>
 
-              {/* After */}
+             {/* After */}
               <WaveformStrip
                 label={
                   segments.after
@@ -392,13 +396,17 @@ export const TraceViewPage = () => {
               >
                 {waveformLoading ? (
                   <WaveformPlaceholder height={120} />
-                ) : segments.after?.samples?.length ? (
-                  <RealEcgWaveform
-                    samples={segments.after.samples}
-                    effectiveSamplingRate={effectiveSamplingRate}
-                    height={120}
-                    grid={waveformData?.grid}
-                  />
+               ) : segments.after ? (
+                  segments.after.samples.length > 0 ? (
+                    <RealEcgWaveform
+                      samples={primarySamples ? primarySamples.slice(Math.floor(segments.after.start_sec * effectiveSamplingRate), Math.ceil(segments.after.end_sec * effectiveSamplingRate)) : []}
+                      effectiveSamplingRate={effectiveSamplingRate}
+                      height={120}
+                      grid={waveformData?.grid}
+                    />
+                  ) : (
+                    <NoSignal message="No post-anomaly data available. Recording ended during the anomaly." />
+                  )
                 ) : primarySamples ? (
                   <RealEcgWaveform
                     samples={primarySamples.slice(Math.floor((primarySamples.length / 3) * 2))}
@@ -616,9 +624,9 @@ const WaveformStrip = ({
   </div>
 );
 
-const NoSignal = () => (
-  <div className="flex h-[120px] items-center justify-center">
-    <span className="text-[12px] text-white/30">No signal data</span>
+const NoSignal = ({ message = 'No signal data' }: { message?: string }) => (
+  <div className="flex h-[120px] items-center justify-center px-6 text-center">
+    <span className="text-[13px] text-white/50">{message}</span>
   </div>
 );
 

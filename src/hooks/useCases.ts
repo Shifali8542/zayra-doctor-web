@@ -35,9 +35,19 @@ export const useCases = () => {
   useEffect(() => {
     if (casesQ.data?.results) {
       if (page === 1) {
-        setAllCases(casesQ.data.results);
+        // Enforce 1 card per patient by deduplicating via patient_code
+        const uniqueCases = Array.from(
+          new Map(casesQ.data.results.map((c) => [c.patient_code, c])).values()
+        );
+        setAllCases(uniqueCases);
       } else {
-        setAllCases((prev) => [...prev, ...casesQ.data!.results]);
+        setAllCases((prev) => {
+          const combined = [...prev, ...casesQ.data!.results];
+          // Maintain uniqueness across pagination
+          return Array.from(
+            new Map(combined.map((c) => [c.patient_code, c])).values()
+          );
+        });
       }
     }
   }, [casesQ.data, page]);

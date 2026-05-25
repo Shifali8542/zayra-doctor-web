@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AppLayout } from '@/components/AppLayout';
 import { Card } from '@/components/Card';
@@ -94,16 +94,26 @@ export const ClaimDetailPage = () => {
   } = useClaim(caseIdNum);
 
   const [notes, setNotes] = useState('');
+  const [selectedRecordId, setSelectedRecordId] = useState<number | null>(null);
+
+  // Set the initial selected record when case details load
+  useEffect(() => {
+    if (detail?.records && detail.records.length > 0 && !selectedRecordId) {
+      const defaultRecord = detail.records.find((r) => r.is_current) || detail.records[0];
+      setSelectedRecordId(defaultRecord.id);
+    }
+  }, [detail, selectedRecordId]);
 
   // Fetch real waveform once we have the patient id from the case detail
   const patientIdFromDetail = detail?.patient?.id;
   const waveformQ = useQuery<PatientWaveformResponse>({
-    queryKey: [API_ENDPOINTS.patientWaveform(patientIdFromDetail ?? 0)],
+    queryKey: [API_ENDPOINTS.patientWaveform(patientIdFromDetail ?? 0), selectedRecordId],
     queryFn: () => patientApi.getWaveform(patientIdFromDetail!, {
+      record_id: selectedRecordId ?? undefined,
       downsample: 8,
       channels: 'II',
     }),
-    enabled: Boolean(patientIdFromDetail),
+    enabled: Boolean(patientIdFromDetail) && Boolean(selectedRecordId),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -203,7 +213,7 @@ export const ClaimDetailPage = () => {
             variant="secondary"
             iconLeft="sparkle"
             size="md"
-            onClick={() => triggerOrinn()}
+            onClick={() => triggerOrinn(selectedRecordId ?? undefined)}
           />
           <Button
             label="Open TraceView"
@@ -222,16 +232,37 @@ export const ClaimDetailPage = () => {
               Anomaly waveform
             </h2>
             <p className="text-[13px] text-[var(--color-text-tertiary)]">
-              Lead II · {records[0]?.sampling_rate ?? '—'}Hz · {records[0]?.num_channels ?? '—'} channels
+              Lead II · {records.find((r) => r.id === selectedRecordId)?.sampling_rate ?? '—'}Hz · {records.find((r) => r.id === selectedRecordId)?.num_channels ?? '—'} channels
             </p>
           </div>
-          <button
+         <button
             onClick={() => navigate(`/trace/${caseIdNum}`)}
             className="text-[13px] font-bold text-[var(--color-primary)] transition hover:opacity-70"
           >
             Inspect in TraceView →
           </button>
         </div>
+
+        {/* ECG Record Switcher */}
+        {records.length > 1 && (
+          <div className="mb-4 flex flex-wrap gap-2">
+            {records.map((record) => (
+              <button
+                key={record.id}
+                onClick={() => setSelectedRecordId(record.id)}
+                className={cn(
+                  "rounded-pill px-3 py-1.5 text-[13px] font-semibold transition",
+                  selectedRecordId === record.id
+                    ? "bg-[var(--color-primary)] text-white"
+                    : "bg-[var(--color-surface)] text-[var(--color-text-secondary)] border border-[var(--color-divider)] hover:border-[var(--color-primary)]"
+                )}
+              >
+                {record.record_name} {record.is_current ? '(Current)' : ''}
+              </button>
+            ))}
+          </div>
+        )}
+
         {waveformQ.isLoading && (
           <WaveformPlaceholder height={160} className="mt-2" />
         )}
@@ -250,12 +281,12 @@ export const ClaimDetailPage = () => {
           </p>
         )}
         <div className="mt-3 flex justify-between text-[12px] text-[var(--color-text-tertiary)]">
-          <span>Record: {records.find((r) => r.is_current)?.record_name ?? records[0]?.record_name ?? '—'}</span>
+          <span>Record: {records.find((r) => r.id === selectedRecordId)?.record_name ?? '—'}</span>
           <span>Lead II · 25mm/s · 10mm/mV</span>
         </div>
       </Card>
 
-      {/* ── Orinn AI Summary ───────────────────────────────────────────────── */}
+      {/* Orinn AI Summary */}
       <Card className="mb-5">
         <div className="mb-3 flex items-center justify-between">
           <div>
@@ -264,12 +295,12 @@ export const ClaimDetailPage = () => {
             </h2>
             <p className="text-[13px] text-[var(--color-text-tertiary)]">Governed AI assessment</p>
           </div>
-          {!orinn && (
+         {!orinn && (
             <Button
               label={isAnalyzing ? 'Analyzing…' : 'Run analysis'}
               size="sm"
               variant="secondary"
-              onClick={() => triggerOrinn()}
+              onClick={() => triggerOrinn(selectedRecordId ?? undefined)}
             />
           )}
         </div>

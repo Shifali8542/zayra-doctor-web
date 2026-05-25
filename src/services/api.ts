@@ -228,8 +228,11 @@ export const casesApi = {
   getDetailFull: async (id: number) =>
     apiFetch<CaseDetail>(API_ENDPOINTS.caseDetailFull(id)),
 
-  triggerOrinn: async (id: number) =>
-    apiFetch<CaseOrinnAnalysis>(API_ENDPOINTS.caseAnalyze(id), { method: 'POST' }),
+  triggerOrinn: async (id: number, recordId?: number) =>
+    apiFetch<CaseOrinnAnalysis>(API_ENDPOINTS.caseAnalyze(id), {
+      method: 'POST',
+      body: recordId ? JSON.stringify({ record_id: recordId }) : undefined,
+    }),
 
   getCounts: async () =>
     apiFetch<CaseCounts>(API_ENDPOINTS.caseCounts),

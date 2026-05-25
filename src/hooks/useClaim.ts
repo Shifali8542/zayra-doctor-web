@@ -38,7 +38,7 @@ export const useClaim = (caseId?: number) => {
 
   // Orinn AI analysis trigger
   const orinnMutation = useMutation({
-    mutationFn: () => casesApi.triggerOrinn(caseId!),
+    mutationFn: (recordId?: number) => casesApi.triggerOrinn(caseId!, recordId),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: [API_ENDPOINTS.caseDetailFull(caseId ?? 0)],
