@@ -1,4 +1,3 @@
-// Formats ISO datetime string → "2m ago", "1h ago" etc
 export const formatRelativeTime = (isoString: string): string => {
   const diffMs = Date.now() - new Date(isoString).getTime();
   const diffMin = Math.floor(diffMs / 60000);
@@ -28,3 +27,10 @@ export const formatPct = (val: number): string => `${val}%`;
 
 export const cn = (...classes: (string | false | null | undefined)[]): string =>
   classes.filter(Boolean).join(' ');
+
+export const getTimeGreeting = (): string => {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good Morning';
+  if (hour < 17) return 'Good Afternoon';
+  return 'Good Evening';
+};

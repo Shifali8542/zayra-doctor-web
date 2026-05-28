@@ -75,7 +75,7 @@ export const TraceViewPage = () => {
   const caseInfo = caseDetail?.case;
   const patientInfo = caseDetail?.patient;
 
-  // ── Case picker (sidebar click with no caseId) ─────────────────────────────
+  // ── Case picker
   if (!caseIdNum) {
     return (
       <AppLayout>
@@ -126,35 +126,46 @@ export const TraceViewPage = () => {
     );
   }
 
-  // ── Waveform view (caseId present) ─────────────────────────────────────────
+  // Waveform view
   return (
     <AppLayout>
       {/* Page header */}
-      <div className="mb-4 mt-4 flex flex-wrap items-start justify-between gap-3">
+      <div className="mb-4 mt-4 flex flex-wrap items-center justify-between gap-3">
+        {/* Left — title + subtitle */}
         <div>
-          <div className="mb-1 flex items-center gap-2">
-            <button
-              onClick={() => navigate(-1)}
-              className="flex items-center gap-1 text-[13px] text-[var(--color-text-secondary)] transition hover:text-[var(--color-text-primary)]"
-            >
-              <Icon name="chevron-left" size={16} color="currentColor" />
-              Back
-            </button>
-          </div>
           <h1 className="text-[24px] font-bold text-[var(--color-text-primary)]">TraceView</h1>
           <p className="mt-0.5 text-[13px] text-[var(--color-text-secondary)]">
-            Case #{caseId}
-            {patientInfo?.patient_code ? ` · ${patientInfo.patient_code}` : ''}
-            {patientInfo?.age ? ` · ${patientInfo.age}y` : ''}
-            {patientInfo?.sex ? ` ${patientInfo.sex}` : ''}
-            {` · Lead ${selectedLead} · ${samplingRate} Hz`}
-            {recordName ? ` · ${recordName}` : ''}
+            {patientInfo?.patient_code ?? `Case #${caseId}`}
+            {` · Lead ${selectedLead}`}
+            {waveformData?.grid?.paper_speed_mm_per_sec
+              ? ` · ${waveformData.grid.paper_speed_mm_per_sec} mm/s`
+              : ''}
+            {waveformData?.grid?.amplitude_mm_per_mv
+              ? ` · ${waveformData.grid.amplitude_mm_per_mv} mm/mV`
+              : ''}
+            {analysis?.quality_score
+              ? ` · Q${Math.round(analysis.quality_score * 100)}`
+              : ''}
           </p>
         </div>
 
-        {/* Severity badge + view toggle */}
-        <div className="flex items-center gap-2">
-          {caseInfo?.severity && <SeverityBadge severity={caseInfo.severity} />}
+        {/* Right — toolbar + view toggle + switch */}
+        <div className="flex items-center gap-3">
+          {/* Zoom + actions toolbar — now top-right */}
+          <div className="flex items-center gap-1 rounded-pill border border-[var(--color-divider)] bg-[var(--color-surface)] px-2 py-1">
+            <ToolBtn icon="minus" onClick={zoomOut} />
+            <span className="min-w-[42px] text-center text-[13px] font-semibold text-[var(--color-text-primary)]">
+              {zoom.toFixed(2)}×
+            </span>
+            <ToolBtn icon="plus" onClick={zoomIn} />
+            <span className="mx-1 h-4 w-px bg-[var(--color-divider)]" />
+            <ToolBtn icon="expand" />
+            <ToolBtn icon="bookmark" />
+            <ToolBtn icon="share" />
+            <ToolBtn icon="book" />
+          </div>
+
+          {/* View toggle */}
           <div className="flex overflow-hidden rounded-pill border border-[var(--color-divider)] bg-[var(--color-surface)]">
             <ViewToggleBtn
               active={viewMode === 'strip'}
@@ -167,6 +178,8 @@ export const TraceViewPage = () => {
               label="12-lead"
             />
           </div>
+
+          {/* Switch case */}
           <button
             onClick={() => navigate('/trace')}
             className="flex items-center gap-1.5 rounded-pill border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-1.5 text-[12px] font-semibold text-[var(--color-text-secondary)] transition hover:bg-[var(--color-bg-alt)]"
@@ -194,20 +207,7 @@ export const TraceViewPage = () => {
 
       {!isLoading && (
         <>
-          {/* Toolbar */}
           <div className="mb-3 flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1 rounded-pill border border-[var(--color-divider)] bg-[var(--color-surface)] px-2 py-1">
-              <ToolBtn icon="minus" onClick={zoomOut} />
-              <span className="min-w-[42px] text-center text-[13px] font-semibold text-[var(--color-text-primary)]">
-                {zoom.toFixed(2)}×
-              </span>
-              <ToolBtn icon="plus" onClick={zoomIn} />
-              <span className="mx-1 h-4 w-px bg-[var(--color-divider)]" />
-              <ToolBtn icon="expand" />
-              <ToolBtn icon="bookmark" />
-              <ToolBtn icon="share" />
-            </div>
-
             {/* Record tabs */}
             {records.length > 1 && (
               <div className="flex flex-wrap items-center gap-1.5">
@@ -494,30 +494,56 @@ export const TraceViewPage = () => {
             </Card>
           )}
 
-          {/* Right panel info (patient + AI summary) — mobile only; desktop has sidebar */}
-          {patientInfo && (
-            <Card className="mb-4">
-              <h2 className="mb-3 text-[16px] font-bold text-[var(--color-text-primary)]">
-                Patient context
-              </h2>
-              <InfoRow label="Code" value={patientInfo.patient_code} />
-              <InfoRow
-                label="Age / sex"
-                value={`${patientInfo.age ?? '—'}y · ${patientInfo.sex ?? '—'}`}
-              />
-              <InfoRow label="Dataset" value={patientInfo.dataset_source_display} />
-              <InfoRow
-                label="Diagnosis"
-                value={patientInfo.display_diagnosis || patientInfo.diagnosis || '—'}
-                last
-              />
-            </Card>
-          )}
+         {/* Event bookmarks — derived from real segment timestamps */}
+          {(segments.before || segments.anomaly || segments.after) && (() => {
+            const onsetSec   = segments.anomaly?.start_sec ?? null;
+            const peakSec    = onsetSec !== null && segments.anomaly?.end_sec != null
+              ? Math.round((onsetSec + segments.anomaly.end_sec) / 2)
+              : null;
+            const resolSec   = segments.after?.start_sec ?? segments.anomaly?.end_sec ?? null;
+
+            const bookmarks: { label: string; offsetSec: number | null }[] = [
+              { label: 'Onset',      offsetSec: onsetSec },
+              { label: 'Peak',       offsetSec: peakSec },
+              { label: 'Resolution', offsetSec: resolSec },
+            ].filter((b) => b.offsetSec !== null);
+
+            if (bookmarks.length === 0) return null;
+
+            return (
+              <Card className="mb-4">
+                <h2 className="mb-3 text-[16px] font-bold text-[var(--color-text-primary)]">
+                  Event bookmarks
+                </h2>
+                <div className="flex flex-col gap-2">
+                  {bookmarks.map((bm, i) => (
+                    <button
+                      key={i}
+                      className="flex items-center justify-between rounded-xl bg-[var(--color-bg-alt)] px-4 py-3 text-left transition hover:bg-[var(--color-divider)]"
+                      onClick={() => {
+                        /* scroll/seek to timestamp — hook extension point */
+                      }}
+                    >
+                      <span className="text-[14px] font-medium text-[var(--color-text-primary)]">
+                        {bm.label}{' '}
+                        <span className="text-[var(--color-text-tertiary)]">
+                          T+{bm.offsetSec}s
+                        </span>
+                      </span>
+                      <span className="text-[13px] text-[var(--color-text-tertiary)]">
+                        jump →
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </Card>
+            );
+          })()}
 
           {/* Annotation */}
           <Card className="mb-4">
             <h2 className="mb-3 text-[17px] font-bold text-[var(--color-text-primary)]">
-              Clinical annotation
+              Annotation
             </h2>
             <div className="rounded-lg border border-[var(--color-divider)] bg-[var(--color-surface)] p-3">
               <textarea

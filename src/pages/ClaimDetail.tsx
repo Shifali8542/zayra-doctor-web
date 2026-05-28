@@ -65,15 +65,15 @@ const ActionPathButton = ({
     onClick={onClick}
     disabled={disabled}
     className={cn(
-      'mb-3 flex w-full items-center gap-3 rounded-xl border border-white/20 bg-white/10 p-4 text-left transition hover:bg-white/15',
+      'mb-3 flex w-full items-center gap-4 rounded-2xl border border-white/15 bg-white/10 px-5 py-4 text-left backdrop-blur-sm transition hover:bg-white/18 active:scale-[0.99]',
       disabled && 'cursor-not-allowed opacity-50',
     )}
   >
-    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15">
-      <Icon name={icon} size={18} color="#FFFFFF" strokeWidth={1.8} />
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15">
+      <Icon name={icon} size={20} color="#FFFFFF" strokeWidth={1.6} />
     </div>
-    <span className="flex-1 text-[15px] font-semibold text-white">{label}</span>
-    <Icon name="arrow-up-right" size={16} color="#FFFFFF" strokeWidth={1.8} />
+    <span className="flex-1 text-[16px] font-semibold text-white">{label}</span>
+    <Icon name="arrow-up-right" size={18} color="rgba(255,255,255,0.7)" strokeWidth={1.6} />
   </button>
 );
 
@@ -175,6 +175,23 @@ export const ClaimDetailPage = () => {
           {patient.sex ?? '—'} · {patient.age ?? '—'}y · {patient.dataset_source_display}
         </p>
 
+        {/* Action buttons */}
+        <div className="mb-5 flex flex-wrap gap-3">
+          <Button
+            label={isAnalyzing ? 'Analyzing…' : 'Ask Alyna'}
+            variant="secondary"
+            iconLeft="sparkle"
+            size="md"
+            onClick={() => triggerOrinn(selectedRecordId ?? undefined)}
+          />
+          <Button
+            label="Open TraceView"
+            iconLeft="trace"
+            size="md"
+            onClick={() => navigate(`/trace/${caseIdNum}`)}
+          />
+        </div>
+
         {/* Real vitals from backend */}
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <MetricCard
@@ -203,23 +220,6 @@ export const ClaimDetailPage = () => {
             value={vitals.rhythm ?? '—'}
             icon="trace"
             large
-          />
-        </div>
-
-        {/* Action buttons */}
-        <div className="mt-5 flex flex-wrap gap-3">
-          <Button
-            label={isAnalyzing ? 'Analyzing…' : 'Ask Alyna'}
-            variant="secondary"
-            iconLeft="sparkle"
-            size="md"
-            onClick={() => triggerOrinn(selectedRecordId ?? undefined)}
-          />
-          <Button
-            label="Open TraceView"
-            iconLeft="trace"
-            size="md"
-            onClick={() => navigate(`/trace/${caseIdNum}`)}
           />
         </div>
       </Card>
@@ -346,6 +346,25 @@ export const ClaimDetailPage = () => {
         )}
       </Card>
 
+      {/* ── History timeline ───────────────────────────────────────────────── */}
+      <Card className="mb-5">
+        <h2 className="mb-4 text-[18px] font-bold text-[var(--color-text-primary)]">
+          History timeline
+        </h2>
+        {history.length === 0 ? (
+          <p className="text-[14px] text-[var(--color-text-tertiary)]">No history yet.</p>
+        ) : (
+          history.map((event, i) => (
+            <TimelineItem
+              key={i}
+              event={event}
+              isFirst={i === 0}
+              isLast={i === history.length - 1}
+            />
+          ))
+        )}
+      </Card>
+
       {/* ── Patient context ────────────────────────────────────────────────── */}
       <Card className="mb-5">
         <h2 className="mb-3 text-[18px] font-bold text-[var(--color-text-primary)]">
@@ -379,96 +398,46 @@ export const ClaimDetailPage = () => {
         <Row label="Signal quality" value={vitals.quality_score ? `${(vitals.quality_score * 100).toFixed(0)}%` : '—'} last />
       </Card>
 
-      {/* ── ECG Records list ───────────────────────────────────────────────── */}
-      <Card className="mb-5">
-        <h2 className="mb-3 text-[18px] font-bold text-[var(--color-text-primary)]">
-          ECG Records ({records.length})
-        </h2>
-        {records.map((r: CaseEcgRecord, i) => (
-          <Row
-            key={r.id}
-            label={r.is_current ? `${r.record_name} (current)` : r.record_name}
-            value={`${r.num_channels}ch · ${r.duration_seconds?.toFixed(1) ?? '—'}s · ${r.sampling_rate}Hz`}
-            last={i === records.length - 1}
-          />
-        ))}
-        {records.length === 0 && (
-          <p className="text-[14px] text-[var(--color-text-tertiary)]">No records found.</p>
-        )}
-      </Card>
-
-      {/* ── History timeline ───────────────────────────────────────────────── */}
-      <Card className="mb-5">
-        <h2 className="mb-4 text-[18px] font-bold text-[var(--color-text-primary)]">
-          History timeline
-        </h2>
-        {history.length === 0 ? (
-          <p className="text-[14px] text-[var(--color-text-tertiary)]">No history yet.</p>
-        ) : (
-          history.map((event, i) => (
-            <TimelineItem
-              key={i}
-              event={event}
-              isFirst={i === 0}
-              isLast={i === history.length - 1}
-            />
-          ))
-        )}
-      </Card>
-
       {/* ActionPath */}
-      {isClaimed && (
-        <div className="hero-gradient mb-5 mt-3 rounded-2xl p-6">
-          <p className="eyebrow mb-2 text-white/80" style={{ letterSpacing: '1.4px' }}>
-            ACTIONPATH
-          </p>
-          <h2 className="mb-2 text-[22px] font-bold text-white">Make a decision</h2>
-          <p className="mb-5 text-[13px] text-white/70">
-            Add notes before submitting your decision.
-          </p>
+      <div className="hero-gradient mb-5 rounded-2xl p-6">
+        <p className="eyebrow mb-1 text-white/70" style={{ letterSpacing: '1.4px' }}>
+          ACTIONPATH
+        </p>
+        <h2 className="mb-5 text-[22px] font-bold text-white">Make a decision</h2>
 
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Clinical notes, observations, outcome…"
-            rows={3}
-            className="mb-4 w-full resize-none rounded-xl border border-white/20 bg-white/10 p-3 text-[14px] text-white placeholder:text-white/50 outline-none"
-          />
+        <ActionPathButton
+          icon="phone"
+          label="Escalate to emergency response"
+          disabled={isActioning}
+          onClick={() => escalateCase({ notes: notes || 'Escalated to emergency response.' })}
+        />
+        <ActionPathButton
+          icon="stethoscope"
+          label="Connect to cardiologist on-call"
+          disabled={isActioning}
+          onClick={() => escalateCase({ notes: notes || 'Referred to cardiologist on-call.' })}
+        />
+        <ActionPathButton
+          icon="eye"
+          label="Continue high observation"
+          disabled={isActioning}
+          onClick={() => completeCase({ notes: notes || 'Continue high observation.' })}
+        />
+        <ActionPathButton
+          icon="check-circle"
+          label="Continue monitoring"
+          disabled={isActioning}
+          onClick={() => completeCase({ notes: notes || 'Continue monitoring.' })}
+        />
+        <ActionPathButton
+          icon="close-circle"
+          label="Mark as false positive"
+          disabled={isActioning}
+          onClick={() => completeCase({ notes: notes || 'Marked as false positive.' })}
+        />
+      </div>
 
-          <ActionPathButton
-            icon="phone"
-            label="Escalate to emergency response"
-            disabled={isActioning}
-            onClick={() => escalateCase({ notes: notes || 'Escalated to emergency response.' })}
-          />
-          <ActionPathButton
-            icon="stethoscope"
-            label="Connect to cardiologist on-call"
-            disabled={isActioning}
-            onClick={() => escalateCase({ notes: notes || 'Referred to cardiologist on-call.' })}
-          />
-          <ActionPathButton
-            icon="eye"
-            label="Continue high observation"
-            disabled={isActioning}
-            onClick={() => completeCase({ notes: notes || 'Continue high observation.' })}
-          />
-          <ActionPathButton
-            icon="check-circle"
-            label="Continue monitoring"
-            disabled={isActioning}
-            onClick={() => completeCase({ notes: notes || 'Continue monitoring.' })}
-          />
-          <ActionPathButton
-            icon="close-circle"
-            label="Mark as false positive"
-            disabled={isActioning}
-            onClick={() => completeCase({ notes: notes || 'Marked as false positive.' })}
-          />
-        </div>
-      )}
-
-      {/* Show outcome if already completed/escalated */}
+      {/* Show outcome if already completed/escalated
       {(c.status === 'completed' || c.status === 'escalated') && c.notes && (
         <Card className="mb-5 border border-[var(--color-divider)]">
           <p className="eyebrow mb-2 text-[11px] tracking-[1.4px] text-[var(--color-text-tertiary)]">
@@ -476,7 +445,7 @@ export const ClaimDetailPage = () => {
           </p>
           <p className="text-[14px] text-[var(--color-text-primary)]">{c.notes}</p>
         </Card>
-      )}
+      )} */}
     </AppLayout>
   );
 };

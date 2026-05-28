@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { patientApi, profileApi, casesApi, API_ENDPOINTS, getAccessToken } from '@/services/api';
+import { patientApi, profileApi, casesApi, impactApi, API_ENDPOINTS, getAccessToken } from '@/services/api';
 
 export const useDashboard = () => {
   const hasToken = Boolean(getAccessToken());
@@ -14,6 +14,12 @@ export const useDashboard = () => {
   const patientsQuery = useQuery({
     queryKey: [API_ENDPOINTS.patientList],
     queryFn: () => patientApi.getList(),
+    enabled: hasToken,
+  });
+
+  const impactQuery = useQuery({
+    queryKey: [API_ENDPOINTS.impactStats],
+    queryFn: impactApi.getStats,
     enabled: hasToken,
   });
 
@@ -41,6 +47,8 @@ export const useDashboard = () => {
     });
   };
 
+  const impact = impactQuery.data;
+
   return {
     profile: profileQuery.data,
     patientCount: patientsQuery.data?.count ?? 0,
@@ -49,5 +57,9 @@ export const useDashboard = () => {
     isLoading: profileQuery.isLoading || liveCasesQuery.isLoading,
     claimCase,
     isClaiming: claimMutation.isPending,
+    avgResponseSec: impact?.avg_response_sec ?? null,
+    streakDays: impact?.streak_days ?? 0,
+    confidenceScore: impact?.confidence_score ?? null,
+    todayEarnings: impact?.reviewed_count ?? 0,
   };
 };

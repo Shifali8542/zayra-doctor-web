@@ -100,7 +100,7 @@ export const CasesPage = () => {
           )}
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        {/* <div className="flex flex-wrap gap-2">
           <span className="self-center text-[12px] text-[var(--color-text-tertiary)] mr-1">Dataset:</span>
           {DATASET_CHIPS.map((chip) => (
             <button
@@ -116,7 +116,7 @@ export const CasesPage = () => {
               {chip.label}
             </button>
           ))}
-        </div>
+        </div> */}
       </div>
 
       {/* Status tabs */}
