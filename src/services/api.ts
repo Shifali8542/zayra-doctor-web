@@ -3,7 +3,7 @@ import type {
   CaseStatus, CaseSeverity, CaseReview, CaseReviewListResponse,
   CaseDetail, CaseOrinnAnalysis, CaseCounts,
   ImpactStats, ImpactMomentsResponse,
-  PatientWaveformResponse, WaveformAnalysisResponse, RecordsIndexResponse,
+  PatientWaveformResponse, WaveformAnalysisResponse, RecordsIndexResponse, AlynaChatResponse, AlynaHistoryMessage,
 } from '@/types';
 
 // CONFIG
@@ -37,7 +37,13 @@ async function apiFetch<T>(
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail ?? err.message ?? `Request failed: ${res.status}`);
+    // Backend returns field-level errors as { "email": ["msg"] } or { "detail": "msg" }
+    const fieldError = Object.values(err)
+      .flat()
+      .find((v) => typeof v === 'string') as string | undefined;
+    throw new Error(
+      fieldError ?? err.detail ?? err.message ?? `Request failed: ${res.status}`,
+    );
   }
   return res.json() as Promise<T>;
 }
@@ -64,6 +70,11 @@ export const API_ENDPOINTS = {
   patientWaveformAnnotations: (id: number) => `/patients/${id}/waveform-annotations/`,
   diagnosisSummary: '/patients/summary/',
   datasetOverview: '/patients/dataset-overview/',
+
+  // Alyna
+  alynaChat:    '/alyna/chat/',
+  alynaHistory: '/alyna/history/',
+  alynaClear:   '/alyna/clear/',
 
   // Assessments
   aiAnalysis: (id: number) => `/assessments/${id}/analyze/`,
@@ -255,9 +266,38 @@ export const impactApi = {
     apiFetch<ImpactMomentsResponse>(API_ENDPOINTS.impactMoments),
 };
 
+// ALYNA API
+export const alynaApi = {
+  chat: async (
+    message: string,
+    opts?: { patient_id?: number; case_id?: number },
+  ) =>
+    apiFetch<AlynaChatResponse>(API_ENDPOINTS.alynaChat, {
+      method: 'POST',
+      body: JSON.stringify({
+        message,
+        ...(opts?.patient_id ? { patient_id: opts.patient_id } : {}),
+        ...(opts?.case_id    ? { case_id:    opts.case_id    } : {}),
+      }),
+    }),
+
+  getHistory: async (opts?: { patient_id?: number; case_id?: number }) => {
+    const query = new URLSearchParams();
+    if (opts?.patient_id) query.set('patient_id', String(opts.patient_id));
+    if (opts?.case_id)    query.set('case_id',    String(opts.case_id));
+    const qs = query.toString();
+    return apiFetch<AlynaHistoryMessage[]>(
+      `${API_ENDPOINTS.alynaHistory}${qs ? `?${qs}` : ''}`,
+    );
+  },
+
+  clear: async () =>
+    apiFetch<{ cleared: number }>(API_ENDPOINTS.alynaClear, {
+      method: 'DELETE',
+    }),
+};
+
 // EARNINGS API
-// Earnings are derived from completed CaseReview records.
-// No separate earnings model exists in backend — we use the completed cases list.
 export const earningsApi = {
   getCompleted: async (params?: { page?: number; page_size?: number }) => {
     const query = new URLSearchParams();

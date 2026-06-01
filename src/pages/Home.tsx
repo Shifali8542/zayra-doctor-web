@@ -29,11 +29,11 @@ export const HomePage = () => {
             <defs>
               {/* Fade: opaque on left, transparent on right */}
               <linearGradient id="ecgFadeH" x1="0" x2="1" y1="0" y2="0">
-                <stop offset="0%" stopColor="rgba(180,210,230,0.0)" />
-                <stop offset="3%" stopColor="rgba(180,210,230,0.55)" />
-                <stop offset="50%" stopColor="rgba(180,210,230,0.42)" />
-                <stop offset="82%" stopColor="rgba(180,210,230,0.18)" />
-                <stop offset="100%" stopColor="rgba(180,210,230,0.0)" />
+                <stop offset="0%"   stopColor="rgba(180,210,230,0.0)"  />
+                <stop offset="3%"   stopColor="rgba(180,210,230,0.18)" />
+                <stop offset="50%"  stopColor="rgba(180,210,230,0.13)" />
+                <stop offset="82%"  stopColor="rgba(180,210,230,0.06)" />
+                <stop offset="100%" stopColor="rgba(180,210,230,0.0)"  />
               </linearGradient>
 
               {/* Mask that clips: only the already-drawn portion is visible */}

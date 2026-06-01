@@ -161,6 +161,21 @@ export interface AlynaMessage {
   text: string;
   confidence?: number;
   tags?: string[];
+  suggestions?: string[];
+}
+
+export interface AlynaChatResponse {
+  reply:       string;
+  suggestions: string[];
+  message_id:  number;
+}
+
+export interface AlynaHistoryMessage {
+  id:          number;
+  role:        'user' | 'assistant';
+  text:        string;
+  suggestions: string[];
+  created_at:  string;
 }
 
 // AUTH

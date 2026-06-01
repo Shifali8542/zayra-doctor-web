@@ -42,10 +42,12 @@ export const useSignupForm = () => {
       return;
     }
     setLoading(true);
-    try {
+   try {
       await signup(name, email, password);
-    } catch {
-      setError('Could not create account.');
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error ? err.message : 'Could not create account.';
+      setError(msg);
     } finally {
       setLoading(false);
     }
