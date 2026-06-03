@@ -35,17 +35,16 @@ export const useCases = () => {
   useEffect(() => {
     if (casesQ.data?.results) {
       if (page === 1) {
-        // Enforce 1 card per patient by deduplicating via patient_code
+        // Backend scopes results to assigned patients — dedup by case id only
         const uniqueCases = Array.from(
-          new Map(casesQ.data.results.map((c) => [c.patient_code, c])).values()
+          new Map(casesQ.data.results.map((c) => [c.id, c])).values()
         );
         setAllCases(uniqueCases);
       } else {
         setAllCases((prev) => {
           const combined = [...prev, ...casesQ.data!.results];
-          // Maintain uniqueness across pagination
           return Array.from(
-            new Map(combined.map((c) => [c.patient_code, c])).values()
+            new Map(combined.map((c) => [c.id, c])).values()
           );
         });
       }

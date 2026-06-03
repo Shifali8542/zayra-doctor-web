@@ -27,17 +27,17 @@ const Tab = ({ label, count, active, onClick }: TabProps) => (
   <button
     onClick={onClick}
     className={cn(
-      'flex items-center gap-2 rounded-pill px-5 py-3 transition-colors',
-      active && 'bg-[var(--color-primary)]',
+      'flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold transition-all',
+      active ? 'bg-primary text-primary-foreground shadow-elevated' : 'text-muted-foreground hover:text-foreground',
     )}
   >
-    <span className={cn('text-[15px] font-semibold', active ? 'text-white' : 'text-[var(--color-text-primary)]')}>
+    <span>
       {label}
     </span>
     <span
       className={cn(
-        'flex h-[22px] min-w-[26px] items-center justify-center rounded-pill px-2 text-[13px] font-bold',
-        active ? 'bg-white/20 text-white' : 'bg-[var(--color-divider)] text-[var(--color-text-primary)]',
+        'flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-xs',
+        active ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-muted text-muted-foreground',
       )}
     >
       {count}
@@ -52,7 +52,6 @@ export const CasesPage = () => {
     cases, totalCount, hasMore, page, setPage,
     tabCounts, isLoading, claimCase, isClaiming,
     search, setSearch,
-    assignedCount,
   } = useCases();
 
   const tabs: { key: CasesTab; label: string }[] = [
@@ -67,71 +66,17 @@ export const CasesPage = () => {
 
   return (
     <AppLayout>
-      <SectionTitle
-        title="Cases"
-        subtitle={
-          assignedCount > 0
-            ? `Your assigned ${assignedCount} patients — triage queue and complete review history.`
-            : 'Triage queue and complete review history.'
-        }
-        className="mt-4"
-      />
-
-      {/* Search + Dataset filter */}
-      <div className="mb-4 flex flex-col gap-3">
-        <div className="flex items-center gap-2 rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)] px-4 py-2.5">
-          <svg width={16} height={16} viewBox="0 0 24 24" fill="none"
-            stroke="var(--color-text-tertiary)" strokeWidth={2}
-            strokeLinecap="round" strokeLinejoin="round">
-            <circle cx={11} cy={11} r={8} />
-            <path d="m21 21-4.35-4.35" />
-          </svg>
-          <input
-            type="text"
-            placeholder="Search by patient code, diagnosis, or dataset…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 bg-transparent text-[14px] text-[var(--color-text-primary)] outline-none placeholder:text-[var(--color-text-tertiary)]"
-          />
-          {search && (
-            <button onClick={() => setSearch('')}
-              className="text-[var(--color-text-tertiary)] transition hover:text-[var(--color-text-primary)]">
-              <svg width={14} height={14} viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" strokeWidth={2.5}
-                strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 6 6 18M6 6l12 12" />
-              </svg>
-            </button>
-          )}
-        </div>
-
-        {/* <div className="flex flex-wrap gap-2">
-          <span className="self-center text-[12px] text-[var(--color-text-tertiary)] mr-1">Dataset:</span>
-          {DATASET_CHIPS.map((chip) => (
-            <button
-              key={chip.value}
-              onClick={() => setSearch(chip.value)}
-              className={cn(
-                'rounded-pill border px-3 py-1 text-[12px] font-semibold transition',
-                activeChip === chip.value
-                  ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-white'
-                  : 'border-[var(--color-divider)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]',
-              )}
-            >
-              {chip.label}
-            </button>
-          ))}
-        </div> */}
-      </div>
+      <header className="mb-6">
+        <h1 className="font-display text-2xl font-bold md:text-3xl">Cases</h1>
+        <p className="text-sm text-muted-foreground">Triage queue and complete review history.</p>
+      </header>
 
       {/* Status tabs */}
-      <div className="mb-5 rounded-pill border border-[var(--color-divider)] bg-[var(--color-surface)] p-1">
-        <div className="scrollbar-hide flex gap-1 overflow-x-auto">
-          {tabs.map((t) => (
-            <Tab key={t.key} label={t.label} count={tabCounts[t.key]}
-              active={activeTab === t.key} onClick={() => setActiveTab(t.key)} />
-          ))}
-        </div>
+      <div className="mb-5 flex gap-1.5 overflow-x-auto rounded-full border border-border bg-card p-1.5">
+        {tabs.map((t) => (
+          <Tab key={t.key} label={t.label} count={tabCounts[t.key]}
+            active={activeTab === t.key} onClick={() => setActiveTab(t.key)} />
+        ))}
       </div>
 
       {/* Search result count */}

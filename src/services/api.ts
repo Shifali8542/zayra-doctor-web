@@ -212,6 +212,7 @@ export const casesApi = {
     page_size?: number;
     mine?: boolean;
     search?: string;
+    all_assigned?: boolean;
   }) => {
     const query = new URLSearchParams();
     if (params?.status) query.set('status', params.status);
@@ -220,6 +221,7 @@ export const casesApi = {
     if (params?.page_size) query.set('page_size', String(params.page_size));
     if (params?.mine) query.set('mine', 'true');
     if (params?.search) query.set('search', params.search);
+    if (params?.all_assigned) query.set('all_assigned', 'true');
     const qs = query.toString();
     return apiFetch<CaseReviewListResponse>(
       `${API_ENDPOINTS.caseList}${qs ? `?${qs}` : ''}`,

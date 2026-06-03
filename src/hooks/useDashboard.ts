@@ -23,10 +23,10 @@ export const useDashboard = () => {
     enabled: hasToken,
   });
 
-  // Live cases for home page preview — max 6 cards
+  // All assigned patients for home page — always shows all 5 regardless of case status
   const liveCasesQuery = useQuery({
-    queryKey: [API_ENDPOINTS.caseList, 'live', 'dashboard'],
-    queryFn: () => casesApi.getList({ status: 'live' }),
+    queryKey: [API_ENDPOINTS.caseList, 'all_assigned', 'dashboard'],
+    queryFn: () => casesApi.getList({ all_assigned: true }),
     enabled: hasToken,
   });
 

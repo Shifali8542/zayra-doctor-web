@@ -120,7 +120,7 @@ export const HomePage = () => {
                   onClaim={() => claimCase(c.id, {
                     onSuccess: () => navigate(`/case/${c.id}`),
                   })}
-                  showClaim
+                  showClaim={c.status === 'live'}
                 />
               </div>
             ))}
