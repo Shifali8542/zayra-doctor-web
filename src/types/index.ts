@@ -250,7 +250,22 @@ export interface CaseCounts {
   escalated: number;
 }
 
-// WAVEFORM
+// PATIENT ASSIGNMENTS
+export type AssignmentSlot = 'critical' | 'urgent' | 'routine' | 'fill';
+
+export interface AssignedPatient {
+  patient_id: number;
+  patient_code: string;
+  priority_slot: AssignmentSlot;
+  assigned_at: string;
+}
+
+export interface AssignmentsResponse {
+  count: number;
+  assignments: AssignedPatient[];
+}
+
+// WAVEFORMa
 export interface WaveformGrid {
   paper_speed_mm_per_sec: number;
   amplitude_mm_per_mv: number;

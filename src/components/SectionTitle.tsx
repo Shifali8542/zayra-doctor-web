@@ -1,8 +1,9 @@
+import type { ReactNode } from 'react';
 import { cn } from '@/utils/format';
 
 interface Props {
   title: string;
-  subtitle?: string;
+  subtitle?: string | ReactNode;
   className?: string;
 }
 

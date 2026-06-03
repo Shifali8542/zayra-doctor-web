@@ -19,7 +19,7 @@ export const HomePage = () => {
     <AppLayout>
       {/* Hero */}
       <section className="relative overflow-hidden rounded-3xl border border-[var(--color-border)] bg-aurora p-6 text-white shadow-elevated md:p-10">
-        {/* ECG waveform: draws left→right, fades out at right edge, then repeats */}
+        {/* ECG waveform: */}
         <div className="absolute inset-0 opacity-30">
           <svg
             viewBox="0 0 300 60"
@@ -51,8 +51,9 @@ export const HomePage = () => {
             {getTimeGreeting()}, Dr. {firstName}.
           </h1>
           <p className="mt-2 max-w-xl text-sm opacity-85 md:text-base">
-            {liveCount} anomalies are awaiting clinician review. First to claim becomes the
-            primary reviewer.
+            {liveCount} {liveCount === 1 ? 'anomaly' : 'anomalies'} in your assigned patients{' '}
+            {liveCount > 0 ? 'awaiting your review' : '— all clear for now'}. First to claim
+            becomes the primary reviewer.
           </p>
 
           {/* Stat pills: performance metrics row */}
@@ -82,39 +83,50 @@ export const HomePage = () => {
       </section>
 
       {/* Cases live now section */}
-      <div className="mb-4 mt-8 flex items-end justify-between">
-        <SectionTitle
-          title="Cases live now"
-          subtitle="Sorted by severity and elapsed time. Claim within 60s for response bonus."
-        />
-        <button
-          className="hidden whitespace-nowrap text-[14px] font-bold text-[var(--color-primary)] transition hover:opacity-70 lg:inline-block"
-          onClick={() => navigate('/cases')}
-        >
-          View all →
-        </button>
-      </div>
-
-      {liveCases.length === 0 ? (
-        <p className="py-6 text-center text-[14px] text-[var(--color-text-tertiary)]">
-          No live cases right now.
-        </p>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {liveCases.map((c) => (
-            <CaseCard
-              key={c.id}
-              caseItem={c}
-              isClaiming={isClaiming}
-              onClick={() => navigate(`/case/${c.id}`)}
-              onClaim={() => claimCase(c.id, {
-                onSuccess: () => navigate(`/case/${c.id}`),
-              })}
-              showClaim
-            />
-          ))}
+      <section className="mt-8">
+        <div className="mb-4 flex items-end justify-between">
+          <div>
+            <h2 className="font-display text-xl font-bold tracking-tight md:text-2xl">
+              Cases live now
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Sorted by severity and elapsed time. Claim within 60s for response bonus.
+            </p>
+          </div>
+          <button
+            className="hidden text-sm font-semibold text-primary hover:underline md:inline"
+            onClick={() => navigate('/cases')}
+          >
+            View all →
+          </button>
         </div>
-      )}
+
+        {liveCases.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">
+            No live cases right now.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+            {liveCases.map((c, index) => (
+              <div
+                key={c.id}
+                className="animate-fade-in-up"
+                style={{ animationDelay: `${index * 60}ms` }}
+              >
+                <CaseCard
+                  caseItem={c}
+                  isClaiming={isClaiming}
+                  onClick={() => navigate(`/case/${c.id}`)}
+                  onClaim={() => claimCase(c.id, {
+                    onSuccess: () => navigate(`/case/${c.id}`),
+                  })}
+                  showClaim
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
     </AppLayout>
   );
 };

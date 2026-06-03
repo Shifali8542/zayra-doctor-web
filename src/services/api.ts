@@ -4,6 +4,7 @@ import type {
   CaseDetail, CaseOrinnAnalysis, CaseCounts,
   ImpactStats, ImpactMomentsResponse,
   PatientWaveformResponse, WaveformAnalysisResponse, RecordsIndexResponse, AlynaChatResponse, AlynaHistoryMessage,
+  AssignmentsResponse,
 } from '@/types';
 
 // CONFIG
@@ -70,6 +71,7 @@ export const API_ENDPOINTS = {
   patientWaveformAnnotations: (id: number) => `/patients/${id}/waveform-annotations/`,
   diagnosisSummary: '/patients/summary/',
   datasetOverview: '/patients/dataset-overview/',
+  myAssignments: '/assignments/me/',
 
   // Alyna
   alynaChat:    '/alyna/chat/',
@@ -194,6 +196,12 @@ export const patientApi = {
     apiFetch<unknown>(API_ENDPOINTS.patientWaveformAnnotations(id)),
 };
 
+
+// ASSIGNMENTS API
+export const assignmentsApi = {
+  getMyAssignments: async () =>
+    apiFetch<AssignmentsResponse>(API_ENDPOINTS.myAssignments),
+};
 
 // CASES API
 export const casesApi = {

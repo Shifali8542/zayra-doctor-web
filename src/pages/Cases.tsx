@@ -52,6 +52,7 @@ export const CasesPage = () => {
     cases, totalCount, hasMore, page, setPage,
     tabCounts, isLoading, claimCase, isClaiming,
     search, setSearch,
+    assignedCount,
   } = useCases();
 
   const tabs: { key: CasesTab; label: string }[] = [
@@ -68,7 +69,11 @@ export const CasesPage = () => {
     <AppLayout>
       <SectionTitle
         title="Cases"
-        subtitle="Triage queue and complete review history."
+        subtitle={
+          assignedCount > 0
+            ? `Your assigned ${assignedCount} patients — triage queue and complete review history.`
+            : 'Triage queue and complete review history.'
+        }
         className="mt-4"
       />
 
@@ -143,7 +148,9 @@ export const CasesPage = () => {
         <p className="py-10 text-center text-[var(--color-text-tertiary)]">Loading cases…</p>
       ) : cases.length === 0 ? (
         <p className="py-10 text-center text-[var(--color-text-tertiary)]">
-          {search ? `No ${activeTab} cases matching "${search}".` : `No ${activeTab} cases.`}
+          {search
+            ? `No ${activeTab} cases matching "${search}" in your assigned patients.`
+            : `No ${activeTab} cases in your assigned patients.`}
         </p>
       ) : activeTab === 'live' || activeTab === 'claimed' ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">

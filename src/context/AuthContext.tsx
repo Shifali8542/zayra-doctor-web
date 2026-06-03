@@ -30,16 +30,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const stored = window.localStorage.getItem(USER_KEY);
     return stored ? (JSON.parse(stored) as User) : null;
   });
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // On mount — if we have a token but no cached user, fetch profile
+  // On mount — validate token and restore session
   useEffect(() => {
     const token = getAccessToken();
-    if (token && !user) {
-      authApi.me().then((u) => {
-        if (u) setUser(u);
-      });
+    if (!token) {
+      setLoading(false);
+      return;
     }
+    authApi.me().then((u) => {
+      if (u) {
+        setUser(u);
+      } else {
+        clearTokens();
+        setUser(null);
+      }
+    }).finally(() => {
+      setLoading(false);
+    });
   }, []);
 
   useEffect(() => {
@@ -55,8 +64,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const u = await authApi.login({ email, password });
       setUser(u);
-    } finally {
       setLoading(false);
+    } catch (err) {
+      setLoading(false);
+      throw err;
     }
   }, []);
 

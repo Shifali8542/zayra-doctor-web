@@ -194,6 +194,21 @@
   animation: ecgDraw 4s linear infinite;
 }
 
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s ease-out both;
+}
+
 /* ECG line scroll — moves the wave horizontally for a heart-monitor effect */
 @media (prefers-reduced-motion: reduce) {
   .animate-ecg {

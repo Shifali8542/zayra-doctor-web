@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
-import { casesApi, API_ENDPOINTS } from '@/services/api';
+import { casesApi, assignmentsApi, API_ENDPOINTS } from '@/services/api';
 import type { CaseStatus, CaseReview } from '@/types';
 
 export type CasesTab = 'live' | 'claimed' | 'completed' | 'missed' | 'escalated';
@@ -58,6 +58,12 @@ export const useCases = () => {
     staleTime: 30 * 1000,
   });
 
+  const assignmentsQ = useQuery({
+    queryKey: [API_ENDPOINTS.myAssignments],
+    queryFn: () => assignmentsApi.getMyAssignments(),
+    staleTime: 5 * 60 * 1000, // assignments rarely change — cache 5 min
+  });
+
   const tabCounts = {
     live:      countsQ.data?.live      ?? 0,
     claimed:   countsQ.data?.claimed   ?? 0,
@@ -102,5 +108,6 @@ export const useCases = () => {
     isClaiming: claimMutation.isPending,
     search,
     setSearch: setSearchTerm,
+    assignedCount: assignmentsQ.data?.count ?? 0,
   };
 };
