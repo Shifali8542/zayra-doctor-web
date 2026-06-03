@@ -36,10 +36,6 @@ export const TopBar = () => {
       setIsSearching(true);
       try {
         const data = await casesApi.getList({ search: value, page_size: 10 });
-
-        // Client-side post-filter: if user typed a known dataset keyword,
-        // Exact keyword → dataset_source value mapping
-        // More specific keys must come before shorter ones
         const datasetKeywords: Record<string, string> = {
           'ptb_diagnostic':  'ptb_diagnostic',
           'ptb-diagnostic':  'ptb_diagnostic',
@@ -54,8 +50,6 @@ export const TopBar = () => {
         };
 
         const lowerVal = value.toLowerCase().trim();
-
-        // Match longest key first to avoid 'ptb' matching 'ptb_xl' cases
         const matchedKey = Object.keys(datasetKeywords)
           .sort((a, b) => b.length - a.length)
           .find((key) => lowerVal === key || lowerVal.startsWith(key));
@@ -101,7 +95,7 @@ export const TopBar = () => {
   };
 
   return (
-    <div className="sticky top-0 z-20 hidden h-[88px] items-center gap-6 border-b border-[var(--color-divider)] bg-[var(--color-surface)] px-8 lg:flex">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-[var(--color-border)] bg-[var(--color-surface)]/80 px-4 backdrop-blur-md md:px-8">
 
       {/* Search box */}
       <div className="relative flex-1">
@@ -161,24 +155,30 @@ export const TopBar = () => {
         )}
       </div>
 
-      {/* Bell */}
-      <button
-        className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--color-divider)] bg-[var(--color-surface)] transition hover:opacity-80"
-        aria-label="Notifications"
-      >
-        <Icon name="bell" size={18} color="var(--color-text-primary)" strokeWidth={1.8} />
-      </button>
+      {/* Controls Container */}
+      <div className="flex items-center gap-2">
+        {/* Bell */}
+        <button
+          aria-label="Notifications"
+          className="relative grid h-9 w-9 place-items-center rounded-full border border-border bg-card transition-colors hover:bg-muted"
+        >
+          <Icon name="bell" size={24} color="currentColor" strokeWidth={2} />
+          <span className="absolute right-1.5 top-1.5 h-2 w-2 animate-pulse-dot rounded-full bg-[oklch(var(--severity-critical))]"></span>
+        </button>
 
-      {/* Profile */}
-      <button
-        onClick={() => navigate('/profile')}
-        className="flex items-center gap-3 rounded-pill border border-[var(--color-divider)] bg-[var(--color-surface)] py-1 pl-1 pr-4 transition hover:opacity-80"
-      >
-        <Avatar initials={initials} size={36} />
-        <span className="text-[14px] font-bold text-[var(--color-text-primary)]">
-          {doctorLabel}
-        </span>
-      </button>
-    </div>
+        {/* Profile */}
+        <button
+          onClick={() => navigate('/profile')}
+          className="flex h-9 items-center gap-2 rounded-full border border-border bg-card pl-1 pr-3 transition-colors hover:bg-muted"
+        >
+          <span className="grid h-7 w-7 place-items-center rounded-full bg-aurora text-xs font-bold text-primary-foreground">
+            {initials}
+          </span>
+          <span className="hidden text-xs font-semibold md:inline">
+            {doctorLabel}
+          </span>
+        </button>
+      </div>
+    </header>
   );
 };

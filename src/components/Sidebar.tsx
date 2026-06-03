@@ -13,18 +13,18 @@ interface NavItem {
 }
 
 const WORKFLOW_ITEMS: NavItem[] = [
-  { to: '/home', icon: 'pulse', label: 'PulseDesk' },
-  { to: '/cases', icon: 'cases', label: 'Cases' },
-  { to: '/trace', icon: 'trace', label: 'TraceView' },
-  { to: '/alyna', icon: 'sparkle', label: 'Alyna' },
+  { to: '/home', icon: 'activity', label: 'PulseDesk' },
+  { to: '/cases', icon: 'layers', label: 'Cases' },
+  { to: '/trace', icon: 'line-chart', label: 'TraceView' },
+  { to: '/alyna', icon: 'sparkles', label: 'Alyna' },
   { to: '/impact', icon: 'trophy', label: 'Impact' },
 ];
 
 const MORE_ITEMS: NavItem[] = [
-  { to: '/atlas', icon: 'book', label: 'ECG Atlas' },
-  { to: '/grand-rounds', icon: 'stethoscope', label: 'Grand Rounds' },
-  { to: '/earnings', icon: 'trending-up', label: 'Earnings' },
-  { to: '/profile', icon: 'shield', label: 'Profile' },
+  { to: '/atlas', icon: 'graduation-cap', label: 'ECG Atlas' },
+  { to: '/grand-rounds', icon: 'users', label: 'Grand Rounds' },
+  { to: '/earnings', icon: 'wallet', label: 'Earnings' },
+  { to: '/profile', icon: 'user', label: 'Profile' },
 ];
 const STORAGE_KEY = 'zayra_sidebar_collapsed';
 
@@ -34,78 +34,71 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
-  const { profile, patientCount } = useDashboard();
+  const { profile, todayEarnings, avgResponseSec } = useDashboard();
 
   return (
     <aside
       className={cn(
-        'fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-[var(--color-divider)] bg-[var(--color-surface)] transition-[width] duration-300 lg:flex',
+        'fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-sidebar-border bg-sidebar/80 backdrop-blur transition-[width] duration-300 md:flex',
         collapsed ? 'w-[88px]' : 'w-[260px]',
       )}
     >
       {/* Brand + collapse/expand toggle */}
       <div
         className={cn(
-          'flex items-center border-b border-[var(--color-divider)] px-5 py-5',
-          collapsed ? 'justify-center' : 'justify-between',
+          'flex items-center px-6 pb-4 pt-6',
+          collapsed ? 'justify-center' : 'justify-start',
         )}
       >
-        {/* Logo — click when collapsed to expand */}
+        {/* Logo */}
         <button
           onClick={collapsed ? onToggle : undefined}
           className={cn(
-            'flex items-center gap-2',
+            'flex items-center gap-2.5',
             collapsed && 'cursor-pointer hover:opacity-70 transition',
           )}
           aria-label={collapsed ? 'Expand sidebar' : undefined}
         >
           <ZayraLogo showWordmark={!collapsed} />
         </button>
-
-        {/* Collapse arrow — only when expanded */}
-        {!collapsed && (
-          <button
-            onClick={onToggle}
-            className="flex h-7 w-7 items-center justify-center rounded-md text-[var(--color-text-tertiary)] transition hover:bg-[var(--color-bg-alt)]"
-            aria-label="Collapse sidebar"
-          >
-            <Icon name="chevron-left" size={16} color="currentColor" />
-          </button>
-        )}
       </div>
 
-      {/* Available status pill */}
-      <div className={cn('px-4 pt-4', collapsed && 'px-3')}>
-        <div
+     {/* Available status pill */}
+      <div className="px-4">
+        <button
           className={cn(
-            'flex items-center rounded-pill border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-2',
+            'group flex w-full items-center rounded-xl border px-3 py-2.5 text-left transition-all',
+            'border-[oklch(var(--teal)/0.3)] bg-[oklch(var(--teal)/0.08)]',
             collapsed ? 'justify-center' : 'justify-between',
           )}
         >
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-[var(--color-success)]" />
+          <span className="flex items-center gap-2.5">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[oklch(var(--teal))] opacity-75"></span>
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-[oklch(var(--teal))]"></span>
+            </span>
             {!collapsed && (
-              <span className="text-[14px] font-bold text-[var(--color-text-primary)]">
+              <span className="text-sm font-semibold text-foreground">
                 Available
               </span>
             )}
-          </div>
+          </span>
           {!collapsed && (
-            <span className="rounded bg-[var(--color-bg-alt)] px-1.5 py-0.5 text-[10px] font-bold tracking-[1px] text-[var(--color-text-tertiary)]">
-              TAP
+            <span className="text-[0.65rem] uppercase tracking-wider text-muted-foreground">
+              Tap
             </span>
           )}
-        </div>
+        </button>
       </div>
 
-      {/* Nav scroll area */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4">
+     {/* Nav scroll area */}
+      <nav className="mt-5 flex-1 overflow-y-auto px-3">
         {!collapsed && (
-          <p className="mb-2 px-2 text-[11px] font-bold tracking-[1.4px] text-[var(--color-text-tertiary)]">
+          <p className="px-3 pb-1.5 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             WORKFLOW
           </p>
         )}
-        <ul className="mb-6 flex flex-col gap-1">
+        <ul className="space-y-0.5">
           {WORKFLOW_ITEMS.map((item) => (
             <li key={item.to}>
               <NavItemLink item={item} collapsed={collapsed} />
@@ -113,12 +106,14 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
           ))}
         </ul>
 
+        <div className="my-4 h-px bg-border/60"></div>
+
         {!collapsed && (
-          <p className="mb-2 px-2 text-[11px] font-bold tracking-[1.4px] text-[var(--color-text-tertiary)]">
+          <p className="px-3 pb-1.5 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             MORE
           </p>
         )}
-        <ul className="flex flex-col gap-1">
+        <ul className="space-y-0.5">
           {MORE_ITEMS.map((item) => (
             <li key={`${item.to}-${item.label}`}>
               <NavItemLink item={item} collapsed={collapsed} />
@@ -127,23 +122,25 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
         </ul>
       </nav>
 
-      {/* Doctor info card */}
-      {!collapsed && profile ? (
-        <div className="m-3 rounded-2xl p-4 hero-gradient">
-          <p className="mb-1 text-[16px] font-bold leading-[22px] text-white">
-            Dr. {profile.first_name} {profile.last_name}
-          </p>
-          <p className="text-[12px] leading-4 text-white/75">
-          {profile.specialization ?? '—'}
-          </p>
+     {/* Bottom stats card / Footer */}
+      {!collapsed ? (
+        <div className="border-t border-sidebar-border px-4 py-4">
+          <div className="rounded-xl p-4 bg-aurora shadow-sm">
+            <p className="mb-1 text-[11px] font-bold uppercase tracking-[1.2px] text-white/80">
+              TODAY
+            </p>
+            <p className="mb-1 text-3xl font-bold text-white">
+              ${todayEarnings || 0}
+            </p>
+            <p className="text-[12px] leading-snug text-white/80">
+              7 cases reviewed · {avgResponseSec ? Math.round(avgResponseSec) : '--'}s avg
+            </p>
+          </div>
         </div>
-      ) : null}
-
-     {/* Expand button at bottom — visible when collapsed */}
-      {collapsed && (
+      ) : (
         <button
           onClick={onToggle}
-          className="m-3 flex h-10 items-center justify-center rounded-md border border-[var(--color-divider)] bg-[var(--color-surface)] text-[var(--color-text-tertiary)] transition hover:bg-[var(--color-bg-alt)]"
+          className="m-4 flex h-10 items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-tertiary)] transition hover:bg-[var(--color-bg-alt)]"
           aria-label="Expand sidebar"
           title="Expand sidebar"
         >
@@ -164,36 +161,29 @@ const NavItemLink = ({
   <NavLink
     to={item.to}
     end={item.to === '/home'}
-    children={({ isActive }) => (
-      <div
-        className={cn(
-          'flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors',
-          collapsed && 'justify-center',
-          isActive
-            ? 'bg-[var(--color-primary)] text-white'
-            : 'text-[var(--color-text-primary)] hover:bg-[var(--color-bg-alt)]',
-        )}
-        title={collapsed ? item.label : undefined}
-      >
-        <Icon
-          name={item.icon}
-          size={18}
-          color={isActive ? '#FFFFFF' : 'var(--color-text-primary)'}
-          strokeWidth={isActive ? 2.2 : 1.8}
-        />
-        {!collapsed && (
-          <span
-            className={cn(
-              'text-[14px] font-semibold',
-              isActive ? 'text-white' : 'text-[var(--color-text-primary)]',
-            )}
-          >
-            {item.label}
-          </span>
-        )}
-      </div>
+    className={({ isActive }) =>
+      cn(
+        'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all',
+        collapsed && 'justify-center',
+        isActive
+          ? 'bg-primary text-primary-foreground shadow-elevated'
+          : 'text-sidebar-foreground hover:bg-sidebar-accent',
+      )
+    }
+    title={collapsed ? item.label : undefined}
+  >
+    <Icon
+      name={item.icon}
+      size={16}
+      color="currentColor"
+      strokeWidth={2}
+    />
+    {!collapsed && (
+      <span className="font-medium">
+        {item.label}
+      </span>
     )}
-  />
+  </NavLink>
 );
 
 export const useSidebarCollapsed = () => {

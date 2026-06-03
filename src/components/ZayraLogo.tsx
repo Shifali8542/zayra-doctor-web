@@ -1,20 +1,13 @@
-/**
- * ZayraLogo
- * Single source of truth for the brand logo.
- * Used in Header, Sidebar, Login, Signup.
- * Pass size="sm" for collapsed sidebar (icon only).
- */
-
 interface Props {
   size?: 'sm' | 'md';
   showWordmark?: boolean;
 }
 
 export const ZayraLogo = ({ size = 'md', showWordmark = true }: Props) => {
-  const dim = size === 'sm' ? 36 : 36;
+  const dim = size === 'sm' ? 60 : 60;
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2.5">
       <img
         src="/icon.png"
         alt="Zayra logo"
@@ -24,7 +17,10 @@ export const ZayraLogo = ({ size = 'md', showWordmark = true }: Props) => {
         style={{ width: dim, height: dim }}
       />
       {showWordmark && (
-        <span className="text-[16px] font-bold tracking-[3px] text-[var(--color-text-primary)]">
+        <span 
+          className="font-display text-[1.05rem] font-bold tracking-[0.18em] text-foreground"
+          style={{ fontFeatureSettings: '"ss01"' }}
+        >
           ZAYRA
         </span>
       )}

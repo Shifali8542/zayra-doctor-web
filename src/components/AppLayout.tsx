@@ -42,7 +42,7 @@ export const AppLayout = ({
       <div
         className={cn(
           'min-h-screen transition-[padding] duration-300',
-          collapsed ? 'lg:pl-[88px]' : 'lg:pl-[260px]',
+          collapsed ? 'md:pl-[88px]' : 'md:pl-[260px]',
         )}
       >
         {/* Desktop top bar (search + bell + profile) — sticky on desktop */}
@@ -51,26 +51,20 @@ export const AppLayout = ({
         {/* Mobile/tablet header + content padding */}
         <main
           className={cn(
-            // Mobile: small horizontal padding, reserve space for bottom tabs
-            'px-5 pt-3 pb-[110px]',
-            // Tablet+: more breathing room
-            'sm:px-6',
-            // Desktop: full width inside main column, no bottom-tab padding
-            'lg:px-8 lg:pt-6 lg:pb-10',
+            'flex-1 pb-24 md:pb-8',
             className,
           )}
         >
           {/* Mobile-only header (sidebar replaces this on desktop) */}
           {showHeader ? (
-            <div className="lg:hidden">
+            <div className="md:hidden">
               <Header />
             </div>
           ) : null}
 
           <div
             className={cn(
-              'w-full',
-              constrained && 'mx-auto max-w-5xl',
+              'mx-auto w-full max-w-7xl px-4 py-6 md:px-8 md:py-10',
             )}
           >
             {children}
@@ -80,7 +74,7 @@ export const AppLayout = ({
 
       {/* Mobile/tablet bottom tabs only */}
       {showTabs ? (
-        <div className="lg:hidden">
+        <div className="md:hidden">
           <BottomTabs />
         </div>
       ) : null}
