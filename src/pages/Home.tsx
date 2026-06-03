@@ -42,8 +42,8 @@ export const HomePage = () => {
         <div className="relative">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] opacity-90">
             <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75"></span>
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-white"></span>
+              <span className="absolute inset-0 animate-pulse-dot rounded-full bg-[oklch(var(--teal))]"></span>
+              <span className="relative h-2 w-2 rounded-full bg-[oklch(var(--teal))]"></span>
             </span>
             AVAILABLE · EMERGENCY REVIEW
           </div>

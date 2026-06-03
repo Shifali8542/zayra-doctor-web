@@ -39,7 +39,7 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
   return (
     <aside
       className={cn(
-        'fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-sidebar-border bg-sidebar/80 backdrop-blur transition-[width] duration-300 md:flex',
+        'sticky top-0 z-30 hidden h-screen shrink-0 border-r border-sidebar-border bg-sidebar/80 backdrop-blur transition-[width] duration-300 md:flex md:flex-col',
         collapsed ? 'w-[88px]' : 'w-[260px]',
       )}
     >
@@ -144,7 +144,7 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
           aria-label="Expand sidebar"
           title="Expand sidebar"
         >
-          <Icon name="chevron-right" size={16} color="currentColor" />
+          <Icon name="chevron-right" size={24} color="currentColor" />
         </button>
       )}
     </aside>
@@ -166,15 +166,15 @@ const NavItemLink = ({
         'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all',
         collapsed && 'justify-center',
         isActive
-          ? 'bg-primary text-primary-foreground shadow-elevated'
-          : 'text-sidebar-foreground hover:bg-sidebar-accent',
+          ? 'bg-[oklch(32%_0.11_255)] text-[oklch(98.5%_0.005_220)] shadow-elevated active'
+          : 'text-[var(--color-text-primary)] hover:bg-[var(--color-bg-alt)] opacity-80 hover:opacity-100',
       )
     }
     title={collapsed ? item.label : undefined}
   >
     <Icon
       name={item.icon}
-      size={16}
+      size={24}
       color="currentColor"
       strokeWidth={2}
     />

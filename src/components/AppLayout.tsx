@@ -10,20 +10,9 @@ interface AppLayoutProps {
   showHeader?: boolean;
   showTabs?: boolean;
   className?: string;
-  /**
-   * If true, content is constrained to a readable max width.
-   * Defaults to false — content fills the available width on desktop.
-   */
   constrained?: boolean;
 }
 
-/**
- * AppLayout — main shell for authenticated screens.
- *
- * Desktop (≥lg): collapsible sidebar on the left + sticky TopBar.
- *                Content fills the full remaining width.
- * Mobile/Tablet: compact top Header + BottomTabs nav at the bottom.
- */
 export const AppLayout = ({
   children,
   showHeader = true,
@@ -34,28 +23,23 @@ export const AppLayout = ({
   const { collapsed, toggle } = useSidebarCollapsed();
 
   return (
-    <div className="min-h-screen bg-app">
+    <div className="flex min-h-screen w-full bg-mist">
       {/* Desktop sidebar */}
       <Sidebar collapsed={collapsed} onToggle={toggle} />
 
-      {/* Main column — offset on desktop by sidebar width */}
-      <div
-        className={cn(
-          'min-h-screen transition-[padding] duration-300',
-          collapsed ? 'md:pl-[88px]' : 'md:pl-[260px]',
-        )}
-      >
+      {/* Main column */}
+      <div className="flex min-w-0 flex-1 flex-col">
         {/* Desktop top bar (search + bell + profile) — sticky on desktop */}
         <TopBar />
 
-        {/* Mobile/tablet header + content padding */}
+        {/* Mobile/tablet header*/}
         <main
           className={cn(
             'flex-1 pb-24 md:pb-8',
             className,
           )}
         >
-          {/* Mobile-only header (sidebar replaces this on desktop) */}
+          {/* Mobile-only header */}
           {showHeader ? (
             <div className="md:hidden">
               <Header />

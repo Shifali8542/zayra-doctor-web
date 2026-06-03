@@ -85,8 +85,8 @@ export const Icon = ({
     case 'activity':
       return (
         <svg {...common}>
-          <polyline
-            points="2,12 6,12 8,7 12,17 14,10 17,12 22,12"
+          <path
+            d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"
             stroke={stroke}
             strokeWidth={sw}
             strokeLinecap="round"
@@ -137,7 +137,7 @@ export const Icon = ({
     case 'bolt':
       return (
         <svg {...common}>
-          <path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z" stroke={stroke} strokeWidth={sw} strokeLinejoin="round" fill={fillColor} />
+          <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" stroke={stroke} strokeWidth={sw} strokeLinejoin="round" fill={fillColor} />
         </svg>
       );
     case 'trending-up':
