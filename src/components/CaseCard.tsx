@@ -1,11 +1,9 @@
 import type { CaseReview } from '@/types';
-import { Card } from './Card';
-import { SeverityBadge } from './SeverityBadge';
 import { MetricCard } from './MetricCard';
 import { WaveformPlaceholder } from './Waveform';
 import { Button } from './Button';
 import { Icon } from './Icon';
-import { formatRelativeTime } from '@/utils/format';
+import { formatRelativeTime, cn } from '@/utils/format';
 
 interface Props {
   caseItem: CaseReview;
@@ -23,42 +21,56 @@ export const CaseCard = ({
   showClaim = true,
 }: Props) => {
   return (
-    <Card
-      className="transition hover:shadow-[0_8px_24px_rgba(10,37,64,0.08)]"
+    <button
+      type="button"
       onClick={onClick}
+      className={cn(
+        "group relative block w-full text-left overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-elevated transition-all hover:shadow-glow",
+        caseItem.severity === 'critical' && "ring-1 ring-[oklch(var(--severity-critical)/0.4)]"
+      )}
     >
-      {/* Header row — severity + patient_code + time */}
-      <div className="mb-3 flex items-center">
-        <SeverityBadge severity={caseItem.severity} />
-        <span className="ml-3 flex-1 text-[13px] tracking-[0.4px] text-[var(--color-text-tertiary)]">
-          {caseItem.patient_code}
-        </span>
-        <div className="flex items-center gap-1">
-          <Icon name="clock" size={13} color="var(--color-text-tertiary)" strokeWidth={1.8} />
-          <span className="text-[13px] text-[var(--color-text-tertiary)]">
-            {formatRelativeTime(caseItem.created_at)}
-          </span>
-          {caseItem.severity === 'critical' && (
-            <span className="relative ml-2 inline-block h-2 w-2 rounded-full border-[1.5px] border-[var(--color-danger)]">
-              <span className="absolute inset-0 animate-pulse-ring rounded-full border-[1.5px] border-[var(--color-danger)]" />
+      {caseItem.severity === 'critical' && (
+        <div className="absolute right-4 top-4 h-2 w-2 animate-pulse-ring rounded-full bg-[oklch(var(--severity-critical))]"></div>
+      )}
+
+      {/* Header row */}
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <span className={cn(
+            "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.7rem] font-semibold uppercase tracking-wide ring-1 ring-inset",
+            caseItem.severity === 'critical' ? "bg-[oklch(var(--severity-critical)/0.12)] text-[oklch(var(--severity-critical))] ring-[oklch(var(--severity-critical)/0.3)]" :
+            caseItem.severity === 'urgent' ? "bg-[oklch(var(--severity-urgent)/0.12)] text-[oklch(var(--severity-urgent))] ring-[oklch(var(--severity-urgent)/0.3)]" :
+            caseItem.severity === 'routine' ? "bg-[oklch(var(--severity-routine)/0.12)] text-[oklch(var(--severity-routine))] ring-[oklch(var(--severity-routine)/0.3)]" :
+            "bg-[oklch(var(--severity-normal)/0.12)] text-[oklch(var(--severity-normal))] ring-[oklch(var(--severity-normal)/0.3)]"
+          )}>
+            <span className="relative flex h-1.5 w-1.5">
+              {caseItem.severity === 'critical' && <span className="absolute inset-0 animate-pulse-dot rounded-full bg-current"></span>}
+              <span className="relative h-1.5 w-1.5 rounded-full bg-current"></span>
             </span>
-          )}
+            {caseItem.severity}
+          </span>
+          <span className="font-mono text-xs text-muted-foreground">{caseItem.patient_code}</span>
         </div>
+        
+        <span className="flex items-center gap-1 text-xs text-muted-foreground tabular-nums">
+          <Icon name="clock" size={13} color="currentColor" strokeWidth={1.8} />
+          {formatRelativeTime(caseItem.created_at)}
+        </span>
       </div>
 
-      {/* Diagnosis — human readable from backend display_diagnosis */}
-      <h3 className="mb-1 text-[18px] font-bold leading-7 text-[var(--color-text-primary)]">
+      {/* Diagnosis */}
+      <h3 className="mb-1 text-base font-semibold text-foreground">
         {caseItem.display_diagnosis || caseItem.diagnosis || '—'}
       </h3>
       {/* Patient meta */}
-      <p className="mb-4 text-[14px] text-[var(--color-text-tertiary)]">
+      <p className="mb-4 text-sm text-muted-foreground">
         {caseItem.sex ?? '—'} · {caseItem.age ?? '—'}y · {caseItem.patient_code}
       </p>
 
-      {/* ECG skeleton — real waveform is available in TraceView and ClaimDetail */}
+      {/* ECG skeleton */}
       <WaveformPlaceholder className="mb-4" />
 
-      {/* Metrics — real HR + HRV + confidence from backend */}
+      {/* Metrics */}
       <div className="mb-4 flex gap-2">
         <MetricCard
           label="HR"
@@ -77,15 +89,16 @@ export const CaseCard = ({
         />
       </div>
 
-      {/* Footer — dataset tag + claim button */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="rounded-pill bg-[var(--color-bg-alt)] px-3 py-1 text-[11px] font-bold text-[var(--color-text-secondary)]">
-            {caseItem.dataset_source_display}
+      {/* Footer */}
+      <div className="mt-4 flex items-center justify-between">
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <Icon name="eye" size={14} color="currentColor" strokeWidth={1.8} />
+            3 viewing
           </span>
           {caseItem.record_name && (
-            <span className="flex items-center gap-1 text-[13px] text-[var(--color-text-tertiary)]">
-              <Icon name="trace" size={14} color="var(--color-text-tertiary)" strokeWidth={1.8} />
+            <span className="flex items-center gap-1.5">
+              <Icon name="trace" size={14} color="currentColor" strokeWidth={1.8} />
               {caseItem.record_name}
             </span>
           )}
@@ -102,11 +115,11 @@ export const CaseCard = ({
           />
         )}
         {caseItem.status === 'claimed' && caseItem.doctor_name && (
-          <span className="text-[13px] font-semibold text-[var(--color-primary)]">
+          <span className="text-[13px] font-semibold text-primary">
             Dr. {caseItem.doctor_name}
           </span>
         )}
       </div>
-    </Card>
+    </button>
   );
 };
