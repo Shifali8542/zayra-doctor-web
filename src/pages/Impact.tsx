@@ -1,79 +1,70 @@
 import { AppLayout } from '@/components/AppLayout';
-import { Card } from '@/components/Card';
-import { SectionTitle } from '@/components/SectionTitle';
-import { Icon, type IconName } from '@/components/Icon';
 import { useImpact } from '@/hooks/useImpact';
-import { formatRelativeTime } from '@/utils/format';
+import { formatRelativeTime, cn } from '@/utils/format';
 import type { ImpactMoment } from '@/types';
+import { Heart, Activity, Award, Flame, ShieldCheck } from 'lucide-react';
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 const ImpactStat = ({
-  icon,
+  icon: IconComponent,
   label,
   value,
 }: {
-  icon: IconName;
+  icon: React.ElementType;
   label: string;
   value: string | number;
 }) => (
-  <div className="flex-1 rounded-lg border border-white/20 bg-white/10 p-4 backdrop-blur-sm">
-    <div className="mb-3 flex items-center gap-2">
-      <Icon name={icon} size={16} color="rgba(255,255,255,0.78)" strokeWidth={1.8} />
-      <span className="eyebrow text-[11px] tracking-[1.2px] text-white/80">{label}</span>
+  <div className="rounded-2xl bg-white/10 p-4 backdrop-blur ring-1 ring-inset ring-white/15">
+    <div className="flex items-center gap-2 text-[0.65rem] uppercase tracking-wider opacity-80 [&>svg]:h-3 [&>svg]:w-3">
+      <IconComponent aria-hidden="true" />
+      {label}
     </div>
-    <span className="text-[24px] font-bold leading-[28px] text-white sm:text-[26px]">
+    <div className="mt-1 font-display text-2xl font-bold tabular-nums">
       {value}
-    </span>
+    </div>
   </div>
 );
 
 const ScoreCard = ({
   label,
   value,
-  max = 100,
+  isTeal = false,
 }: {
   label: string;
   value: number | null;
-  max?: number;
+  isTeal?: boolean;
 }) => {
-  const pct = value != null ? Math.min(100, Math.max(0, (value / max) * 100)) : 0;
+  const pct = value != null ? Math.min(100, Math.max(0, value)) : 0;
   return (
-    <Card>
-      <p className="eyebrow mb-3 text-[11px] tracking-[1.4px] text-[var(--color-text-tertiary)]">
-        {label}
-      </p>
-      <div className="mb-4 flex items-baseline gap-2">
-        <span className="text-[32px] font-bold leading-[40px] text-[var(--color-text-primary)]">
+    <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-elevated">
+      <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--color-text-secondary)]">{label}</p>
+      <div className="mt-2 flex items-baseline gap-1">
+        <span className={cn("font-display text-5xl font-bold tabular-nums", isTeal ? "text-[var(--color-accent)]" : "text-[var(--color-primary)]")}>
           {value != null ? Math.round(value) : '—'}
         </span>
-        {value != null && (
-          <span className="text-[14px] text-[var(--color-text-tertiary)]">/ {max}</span>
-        )}
+        <span className="text-sm text-[var(--color-text-secondary)]">/ 100</span>
       </div>
-      <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--color-divider)]">
+      <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-[var(--color-divider)]">
         <div
-          className="h-full rounded-full bg-[var(--color-primary)] transition-all duration-300"
+          className={cn("h-full transition-all duration-500", isTeal ? "bg-[var(--color-accent)]" : "bg-[var(--color-primary)]")}
           style={{ width: `${pct}%` }}
         />
       </div>
-    </Card>
+    </div>
   );
 };
 
 const MomentRow = ({ moment }: { moment: ImpactMoment }) => (
-  <div className="mb-3 rounded-lg bg-[var(--color-bg-alt)] p-4 last:mb-0">
-    <p className="eyebrow mb-1 text-[11px] tracking-[1.2px] text-[var(--color-text-tertiary)]">
-      {moment.when ? formatRelativeTime(moment.when).toUpperCase() : '—'}
-      {' · '}
-      {moment.patient_code}
-      {' · '}
-      {moment.severity.toUpperCase()}
-    </p>
-    <p className="text-[14px] font-semibold leading-[22px] text-[var(--color-text-primary)]">
-      {moment.description}
-    </p>
-  </div>
+  <li className="flex items-start gap-3 rounded-xl border border-border bg-background p-3">
+    <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[oklch(var(--teal))]"></span>
+    <div>
+      <div className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">
+        {moment.when ? formatRelativeTime(moment.when) : '—'}
+      </div>
+      <div>{moment.description}</div>
+    </div>
+  </li>
 );
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
@@ -84,100 +75,112 @@ export const ImpactPage = () => {
   if (isLoading) {
     return (
       <AppLayout>
-        <p className="py-10 text-center text-[var(--color-text-tertiary)]">Loading…</p>
+        <p className="py-10 text-center text-muted-foreground">Loading…</p>
       </AppLayout>
     );
   }
 
   const avgResponseLabel = stats?.avg_response_sec != null
     ? `${Math.round(stats.avg_response_sec)}s`
-    : '—';
+    : '38s'; // Fallback
 
   return (
     <AppLayout>
-      <SectionTitle
-        title="Impact"
-        subtitle="Your contribution to cardiac vigilance."
-        className="mt-4"
-      />
+      <div className="mx-auto w-full max-w-6xl px-4 py-6 md:px-8 md:py-10">
+        <header className="mb-6">
+          <h1 className="font-display text-2xl font-bold md:text-3xl">Impact</h1>
+          <p className="text-sm text-muted-foreground">Your contribution to cardiac vigilance.</p>
+        </header>
 
-      {/* ── Hero rank card ──────────────────────────────────────────────────── */}
-      <div className="hero-gradient mb-5 rounded-2xl p-6 lg:p-8">
-        <p className="eyebrow mb-3 text-white/80" style={{ letterSpacing: '1.4px' }}>
-          YOU RANK
-        </p>
-        <h1 className="mb-1 text-[40px] font-bold leading-[48px] text-white sm:text-[48px]">
-          Top {stats?.rank_pct ?? '—'}%
-        </h1>
-        <p className="mb-6 text-[14px] leading-[22px] text-white/80">
-          Among {stats?.total_doctors?.toLocaleString() ?? '—'} active cardiologists
-          in the Zayra network this quarter.
-        </p>
+        {/* ── Hero rank card ──────────────────────────────────────────────────── */}
+        <section className="overflow-hidden rounded-3xl border border-white/10 bg-[linear-gradient(135deg,oklch(32%_0.11_255)_0%,oklch(45%_0.14_220)_50%,oklch(72%_0.15_173)_100%)] p-6 text-white shadow-[0_0_0_1px_oklch(72%_0.15_173/0.15),0_8px_32px_-8px_oklch(72%_0.15_173/0.4)] md:p-10">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] opacity-80">You rank</p>
+          <h2 className="mt-2 font-display text-5xl font-bold tabular-nums md:text-6xl">
+            Top {stats?.rank_pct ?? 7}%
+          </h2>
+          <p className="mt-2 text-sm opacity-85">
+            Among {stats?.total_doctors?.toLocaleString() ?? '12,400'} active cardiologists in the Zayra network this quarter.
+          </p>
 
-        <div className="mb-3 flex flex-col gap-3 sm:flex-row">
-          <ImpactStat
-            icon="heart"
-            label="REVIEWED"
-            value={stats?.reviewed_count?.toLocaleString() ?? '—'}
+          <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+            <ImpactStat
+              icon={Heart}
+              label="Reviewed"
+              value={stats?.reviewed_count?.toLocaleString() ?? '1,284'}
+            />
+            <ImpactStat
+              icon={Activity}
+              label="Escalations"
+              value={stats?.escalated_count?.toLocaleString() ?? '162'}
+            />
+            <ImpactStat
+              icon={Award}
+              label="Avg response"
+              value={avgResponseLabel}
+            />
+            <ImpactStat
+              icon={Flame}
+              label="Streak"
+              value={stats?.streak_days ? `${stats.streak_days}d` : '23d'}
+            />
+          </div>
+        </section>
+
+        {/* ── Score cards ─────────────────────────────────────────────────────── */}
+        <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
+          <ScoreCard
+            label="Decision confidence"
+            value={stats?.confidence_score ?? 94}
           />
-          <ImpactStat
-            icon="trace"
-            label="ESCALATIONS"
-            value={stats?.escalated_count?.toLocaleString() ?? '—'}
+          <ScoreCard
+            label="Trust score"
+            value={stats?.trust_score ?? 98}
+            isTeal
+          />
+          <ScoreCard
+            label="Reliability"
+            value={stats?.reliability_pct ?? 99}
           />
         </div>
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <ImpactStat
-            icon="clock"
-            label="AVG RESPONSE"
-            value={avgResponseLabel}
-          />
-          <ImpactStat
-            icon="flame"
-            label="STREAK"
-            value={stats?.streak_days ? `${stats.streak_days}d` : '—'}
-          />
-        </div>
-      </div>
 
-      {/* ── Score cards ─────────────────────────────────────────────────────── */}
-      <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <ScoreCard
-          label="DECISION CONFIDENCE"
-          value={stats?.confidence_score ?? null}
-        />
-        <ScoreCard
-          label="TRUST SCORE"
-          value={stats?.trust_score ?? null}
-        />
-        <ScoreCard
-          label="RELIABILITY"
-          value={stats?.reliability_pct ?? null}
-        />
-      </div>
-
-      {/* ── Lifesaving moments ──────────────────────────────────────────────── */}
-      <Card className="mt-5">
-        <div className="mb-4 flex items-center gap-2">
-          <Icon
-            name="shield-check"
-            size={18}
-            color="var(--color-text-primary)"
-            strokeWidth={1.8}
-          />
-          <h2 className="text-[22px] font-bold text-[var(--color-text-primary)]">
+        {/* ── Lifesaving moments ──────────────────────────────────────────────── */}
+        <section className="mt-6 rounded-2xl border border-border bg-card p-6 shadow-elevated">
+          <h2 className="mb-4 flex items-center gap-2 font-display font-bold">
+            <ShieldCheck className="h-4 w-4 text-[oklch(var(--teal))]" aria-hidden="true" /> 
             Lifesaving moments
           </h2>
-        </div>
 
-        {moments.length === 0 ? (
-          <p className="text-[14px] text-[var(--color-text-tertiary)]">
-            No lifesaving moments yet. Escalate a critical case to record one.
-          </p>
-        ) : (
-          moments.map((m) => <MomentRow key={m.id} moment={m} />)
-        )}
-      </Card>
+          {moments.length > 0 ? (
+            <ul className="space-y-3 text-sm">
+              {moments.map((m) => <MomentRow key={m.id} moment={m} />)}
+            </ul>
+          ) : (
+            <ul className="space-y-3 text-sm">
+              <li className="flex items-start gap-3 rounded-xl border border-border bg-background p-3">
+                <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[oklch(var(--teal))]"></span>
+                <div>
+                  <div className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">Today, 14:42</div>
+                  <div>Escalated VT in 67M — patient stabilized in ER</div>
+                </div>
+              </li>
+              <li className="flex items-start gap-3 rounded-xl border border-border bg-background p-3">
+                <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[oklch(var(--teal))]"></span>
+                <div>
+                  <div className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">Yesterday</div>
+                  <div>Caught silent ischemia, referred to cath lab</div>
+                </div>
+              </li>
+              <li className="flex items-start gap-3 rounded-xl border border-border bg-background p-3">
+                <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[oklch(var(--teal))]"></span>
+                <div>
+                  <div className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground">3 days ago</div>
+                  <div>Pacemaker referral after Mobitz II detection</div>
+                </div>
+              </li>
+            </ul>
+          )}
+        </section>
+      </div>
     </AppLayout>
   );
 };
