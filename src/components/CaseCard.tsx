@@ -58,20 +58,22 @@ export const CaseCard = ({
         </span>
       </div>
 
-      {/* Diagnosis */}
-      <h3 className="mb-1 text-base font-semibold text-foreground">
-        {caseItem.display_diagnosis || caseItem.diagnosis || '—'}
-      </h3>
-      {/* Patient meta */}
-      <p className="mb-4 text-sm text-muted-foreground">
-        {caseItem.sex ?? '—'} · {caseItem.age ?? '—'}y · {caseItem.patient_code}
-      </p>
+      <div className="mt-4">
+        {/* Diagnosis */}
+        <h3 className="font-display text-base font-semibold leading-tight text-foreground">
+          {caseItem.display_diagnosis || caseItem.diagnosis || '—'}
+        </h3>
+        {/* Patient meta */}
+        <p className="mt-1 text-sm text-muted-foreground">
+          {caseItem.sex ?? '—'} · {caseItem.age ?? '—'}y · {caseItem.patient_code}
+        </p>
+      </div>
 
       {/* ECG skeleton */}
-      <WaveformPlaceholder className="mb-4" />
+      <WaveformPlaceholder className="mt-3 -mx-1 h-12 overflow-hidden rounded-lg bg-muted/40" />
 
       {/* Metrics */}
-      <div className="mb-4 flex gap-2">
+      <div className="mt-4 grid grid-cols-3 gap-3 text-xs">
         <MetricCard
           label="HR"
           value={caseItem.heart_rate_bpm ?? '—'}
@@ -91,14 +93,14 @@ export const CaseCard = ({
 
       {/* Footer */}
       <div className="mt-4 flex items-center justify-between">
-        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1.5">
-            <Icon name="eye" size={14} color="currentColor" strokeWidth={1.8} />
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <Icon name="eye" size={12} color="currentColor" strokeWidth={2} />
             3 viewing
           </span>
           {caseItem.record_name && (
-            <span className="flex items-center gap-1.5">
-              <Icon name="trace" size={14} color="currentColor" strokeWidth={1.8} />
+            <span className="flex items-center gap-1">
+              <Icon name="activity" size={12} color="currentColor" strokeWidth={2} />
               {caseItem.record_name}
             </span>
           )}

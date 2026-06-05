@@ -27,19 +27,12 @@ const Tab = ({ label, count, active, onClick }: TabProps) => (
   <button
     onClick={onClick}
     className={cn(
-      'flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold transition-all',
-      active ? 'bg-primary text-primary-foreground shadow-elevated' : 'text-muted-foreground hover:text-foreground',
+      'whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold transition-all',
+      active ? 'bg-[oklch(32%_0.11_255)] text-[oklch(98.5%_0.005_220)] shadow-elevated' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]',
     )}
   >
-    <span>
-      {label}
-    </span>
-    <span
-      className={cn(
-        'flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-xs',
-        active ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-muted text-muted-foreground',
-      )}
-    >
+    {label}
+    <span className="ml-2 rounded-full bg-black/10 px-1.5 py-0.5 text-[0.65rem] tabular-nums dark:bg-white/10">
       {count}
     </span>
   </button>
@@ -98,7 +91,7 @@ export const CasesPage = () => {
             : `No ${activeTab} cases in your assigned patients.`}
         </p>
       ) : activeTab === 'live' || activeTab === 'claimed' ? (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
           {cases.map((c) => (
             <CaseCard key={c.id} caseItem={c} isClaiming={isClaiming}
               onClick={() => navigate(`/case/${c.id}`)}
@@ -140,9 +133,6 @@ export const CasesPage = () => {
       )}
 
       <div className="mt-6 flex flex-col items-center gap-3">
-        <p className="text-[13px] text-[var(--color-text-tertiary)]">
-          {cases.length} of {totalCount} cases
-        </p>
         {hasMore && (
           <button onClick={() => setPage(page + 1)}
             className="rounded-pill border border-[var(--color-divider)] bg-[var(--color-surface)] px-6 py-3 text-[14px] font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-bg-alt)]">
