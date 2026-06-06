@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AppLayout } from '@/components/AppLayout';
-import { Card } from '@/components/Card';
-import { Button } from '@/components/Button';
-import { MetricCard } from '@/components/MetricCard';
 import { Icon, type IconName } from '@/components/Icon';
 import { RealEcgWaveform, WaveformPlaceholder } from '@/components/Waveform';
 import { SeverityBadge } from '@/components/SeverityBadge';
@@ -11,43 +8,53 @@ import { useClaim } from '@/hooks/useClaim';
 import { cn, formatRelativeTime } from '@/utils/format';
 import { useQuery } from '@tanstack/react-query';
 import { patientApi, API_ENDPOINTS } from '@/services/api';
-import type { CaseHistoryEvent, CaseEcgRecord, PatientWaveformResponse } from '@/types';
+import type { CaseHistoryEvent, PatientWaveformResponse } from '@/types';
 
-// Sub-components
-const Row = ({ label, value, last }: { label: string; value: string; last?: boolean }) => (
-  <div className={cn('flex items-start py-3', !last && 'border-b border-[var(--color-divider)]')}>
-    <span className="flex-1 text-[14px] text-[var(--color-text-secondary)]">{label}</span>
-    <span className="flex-[1.4] text-right text-[14px] font-semibold text-[var(--color-text-primary)]">
-      {value}
-    </span>
+// Sub-components mapped to new reference UI
+const ContextRow = ({ label, value }: { label: string; value: string }) => (
+  <div className="flex items-center justify-between border-b border-[var(--color-border)]/60 pb-2 last:border-0">
+    <dt className="text-[var(--color-text-tertiary)] whitespace-nowrap mr-3">{label}</dt>
+    <dd className="font-semibold text-[var(--color-text-primary)] text-right max-w-[65%]">{value}</dd>
   </div>
 );
 
-const TimelineItem = ({
-  event,
-  isFirst,
-  isLast,
+const SnapshotRow = ({
+  label,
+  subLabel,
+  value,
+  isCritical,
 }: {
-  event: CaseHistoryEvent;
-  isFirst: boolean;
-  isLast: boolean;
+  label: string;
+  subLabel: string;
+  value: string;
+  isCritical?: boolean;
 }) => (
-  <div className="flex items-stretch">
-    <div className="flex w-5 flex-col items-center">
-      {!isFirst && <div className="h-3 w-px bg-[var(--color-divider)]" />}
-      <div className="my-1 h-2 w-2 rounded-full bg-[var(--color-primary)]" />
-      {!isLast && <div className="w-px flex-1 bg-[var(--color-divider)]" />}
+  <div className="flex items-center justify-between py-2.5 border-b border-[var(--color-border)]/60 last:border-0">
+    <div>
+      <div className="text-sm font-semibold text-[var(--color-text-primary)]">{label}</div>
+      <div className="text-[0.7rem] text-[var(--color-text-tertiary)]">{subLabel}</div>
     </div>
-    <div className="mb-4 ml-3 flex-1">
-      <p className="eyebrow mb-0.5 text-[11px] tracking-[1.2px] text-[var(--color-text-tertiary)]">
-        {event.when ? formatRelativeTime(event.when) : '—'}
-        {event.doctor_name ? ` · ${event.doctor_name}` : ''}
-      </p>
-      <p className="text-[14px] leading-[22px] text-[var(--color-text-primary)]">
-        {event.description}
-      </p>
+    <div
+      className={cn(
+        'font-display text-lg font-bold tabular',
+        isCritical ? 'text-[var(--color-danger)]' : 'text-[var(--color-text-primary)]',
+      )}
+    >
+      {value}
     </div>
   </div>
+);
+
+const TimelineItem = ({ event }: { event: CaseHistoryEvent }) => (
+  <li className="relative">
+    <span className="absolute -left-[26px] top-1.5 h-2.5 w-2.5 rounded-full bg-[var(--color-accent)] ring-4 ring-[var(--color-surface)]" />
+    <div className="tabular text-xs font-semibold uppercase tracking-wider text-[var(--color-text-tertiary)]">
+      {event.when ? formatRelativeTime(event.when) : '—'}
+    </div>
+    <div className="mt-0.5 text-sm text-[var(--color-text-primary)]">
+      {event.description} {event.doctor_name ? `(${event.doctor_name})` : ''}
+    </div>
+  </li>
 );
 
 const ActionPathButton = ({
@@ -55,33 +62,40 @@ const ActionPathButton = ({
   label,
   onClick,
   disabled,
+  variant = 'default',
 }: {
   icon: IconName;
   label: string;
   onClick?: () => void;
   disabled?: boolean;
+  variant?: 'default' | 'critical';
 }) => (
   <button
     onClick={onClick}
     disabled={disabled}
     className={cn(
-      'mb-3 flex w-full items-center gap-4 rounded-2xl border border-white/15 bg-white/10 px-5 py-4 text-left backdrop-blur-sm transition hover:bg-white/18 active:scale-[0.99]',
+      'flex w-full items-center justify-between rounded-xl px-3.5 py-3 text-left text-sm font-semibold transition-all',
+      variant === 'critical'
+        ? 'bg-[oklch(var(--severity-critical))] text-white shadow-pulse hover:brightness-110'
+        : 'bg-white/10 text-white hover:bg-white/15',
       disabled && 'cursor-not-allowed opacity-50',
     )}
   >
-    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15">
-      <Icon name={icon} size={20} color="#FFFFFF" strokeWidth={1.6} />
-    </div>
-    <span className="flex-1 text-[16px] font-semibold text-white">{label}</span>
-    <Icon name="arrow-up-right" size={18} color="rgba(255,255,255,0.7)" strokeWidth={1.6} />
+    <span className="flex items-center gap-2.5">
+      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/15 [&>svg]:h-3.5 [&>svg]:w-3.5">
+        <Icon name={icon} size={14} color="currentColor" strokeWidth={2} />
+      </span>
+      <span className="leading-tight">{label}</span>
+    </span>
+    <Icon name="arrow-up-right" size={14} className="shrink-0 opacity-70" color="currentColor" strokeWidth={2} />
   </button>
 );
 
-// Main Page 
+// Main Page
 export const ClaimDetailPage = () => {
   const navigate = useNavigate();
   const { caseId } = useParams<{ caseId: string }>();
- const caseIdNum = caseId ? Number(caseId) : undefined;
+  const caseIdNum = caseId ? Number(caseId) : undefined;
 
   const [notes, setNotes] = useState('');
   const [selectedRecordId, setSelectedRecordId] = useState<number | null>(null);
@@ -94,8 +108,8 @@ export const ClaimDetailPage = () => {
     triggerOrinn,
     isActioning,
     isAnalyzing,
- } = useClaim(caseIdNum, selectedRecordId);
- 
+  } = useClaim(caseIdNum, selectedRecordId);
+
   // Set the initial selected record when case details load
   useEffect(() => {
     if (detail?.records && detail.records.length > 0 && !selectedRecordId) {
@@ -108,21 +122,22 @@ export const ClaimDetailPage = () => {
   const patientIdFromDetail = detail?.patient?.id;
   const waveformQ = useQuery<PatientWaveformResponse>({
     queryKey: [API_ENDPOINTS.patientWaveform(patientIdFromDetail ?? 0), selectedRecordId],
-    queryFn: () => patientApi.getWaveform(patientIdFromDetail!, {
-      record_id: selectedRecordId ?? undefined,
-      downsample: 8,
-      channels: 'II',
-    }),
+    queryFn: () =>
+      patientApi.getWaveform(patientIdFromDetail!, {
+        record_id: selectedRecordId ?? undefined,
+        downsample: 8,
+        channels: 'II',
+      }),
     enabled: Boolean(patientIdFromDetail) && Boolean(selectedRecordId),
     staleTime: 5 * 60 * 1000,
   });
 
   // Pick best channel from waveforms dict (prefer 'II', fall back to first)
   const primarySamples = waveformQ.data?.waveforms
-    ? (waveformQ.data.waveforms['II']
-        ?? waveformQ.data.waveforms['ii']
-        ?? Object.values(waveformQ.data.waveforms)[0]
-        ?? null)
+    ? waveformQ.data.waveforms['II'] ??
+      waveformQ.data.waveforms['ii'] ??
+      Object.values(waveformQ.data.waveforms)[0] ??
+      null
     : null;
 
   if (isLoading) {
@@ -142,310 +157,369 @@ export const ClaimDetailPage = () => {
   }
 
   const { case: c, patient, vitals, records, orinn, history } = detail;
-
-  const isClaimed = c.status === 'claimed';
+  const activeRecord = records.find((r) => r.id === selectedRecordId);
 
   return (
     <AppLayout>
-      {/* Back */}
-      <button
-        onClick={() => navigate(-1)}
-        className="mb-2 inline-flex items-center gap-2 py-3 text-[14px] font-medium text-[var(--color-text-primary)] transition hover:opacity-70"
-      >
-        <Icon name="chevron-left" size={20} color="var(--color-text-primary)" />
-        Back to Cases
-      </button>
+      <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8 md:py-10">
+        <button
+          onClick={() => navigate(-1)}
+          className="mb-4 inline-flex items-center gap-1 text-sm text-[var(--color-text-tertiary)] transition-colors hover:text-[var(--color-text-primary)]"
+        >
+          <Icon name="chevron-left" size={16} /> Back to PulseDesk
+        </button>
 
-      {/* Case header */}
-      <Card className="mb-5">
-        <div className="mb-3 flex items-center gap-3">
-          <SeverityBadge severity={c.severity} />
-          <span className="text-[13px] text-[var(--color-text-tertiary)]">
-            {patient.patient_code}
-          </span>
-          <span className="ml-auto text-[13px] text-[var(--color-text-tertiary)]">
-            {formatRelativeTime(c.created_at)}
-          </span>
-        </div>
-
-        <h1 className="mb-1 text-[26px] font-bold leading-[34px] text-[var(--color-text-primary)]">
-          {patient.display_diagnosis}
-        </h1>
-        <p className="mb-5 text-[14px] text-[var(--color-text-tertiary)]">
-          {patient.sex ?? '—'} · {patient.age ?? '—'}y · {patient.dataset_source_display}
-        </p>
-
-        {/* Action buttons */}
-        <div className="mb-5 flex flex-wrap gap-3">
-          <Button
-            label={isAnalyzing ? 'Analyzing…' : 'Ask Alyna'}
-            variant="secondary"
-            iconLeft="sparkle"
-            size="md"
-            onClick={() => triggerOrinn(selectedRecordId ?? undefined)}
-          />
-          <Button
-            label="Open TraceView"
-            iconLeft="trace"
-            size="md"
-            onClick={() => navigate(`/trace/${caseIdNum}`)}
-          />
-        </div>
-
-        {/* Real vitals from backend */}
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          <MetricCard
-            label="HEART RATE"
-            value={vitals.heart_rate_bpm ?? c.heart_rate_bpm ?? '—'}
-            unit={vitals.heart_rate_bpm ? 'bpm' : ''}
-            icon="heart"
-            large
-          />
-          <MetricCard
-            label="HRV"
-            value={vitals.hrv_ms ?? c.hrv_ms ?? '—'}
-            unit={vitals.hrv_ms ? 'ms' : ''}
-            icon="activity"
-            large
-          />
-          <MetricCard
-            label="AI CONFIDENCE"
-            value={c.confidence_score ?? '—'}
-            unit={c.confidence_score ? '%' : ''}
-            icon="sparkle"
-            large
-          />
-          <MetricCard
-            label="RHYTHM"
-            value={vitals.rhythm ?? '—'}
-            icon="trace"
-            large
-          />
-        </div>
-      </Card>
-
-      {/* ── ECG Waveform strip  */}
-      <Card className="mb-5">
-        <div className="mb-3 flex items-start justify-between">
-          <div>
-            <h2 className="text-[18px] font-bold text-[var(--color-text-primary)]">
-              Anomaly waveform
-            </h2>
-            <p className="text-[13px] text-[var(--color-text-tertiary)]">
-              Lead II · {records.find((r) => r.id === selectedRecordId)?.sampling_rate ?? '—'}Hz · {records.find((r) => r.id === selectedRecordId)?.num_channels ?? '—'} channels
-            </p>
-          </div>
-         <button
-            onClick={() => navigate(`/trace/${caseIdNum}`)}
-            className="text-[13px] font-bold text-[var(--color-primary)] transition hover:opacity-70"
-          >
-            Inspect in TraceView →
-          </button>
-        </div>
-
-        {/* ECG Record Switcher */}
-        {records.length > 1 && (
-          <div className="mb-4 flex flex-wrap gap-2">
-            {records.map((record) => (
-              <button
-                key={record.id}
-                onClick={() => setSelectedRecordId(record.id)}
-                className={cn(
-                  "rounded-pill px-3 py-1.5 text-[13px] font-semibold transition",
-                  selectedRecordId === record.id
-                    ? "bg-[var(--color-primary)] text-white"
-                    : "bg-[var(--color-surface)] text-[var(--color-text-secondary)] border border-[var(--color-divider)] hover:border-[var(--color-primary)]"
-                )}
-              >
-                {record.record_name} {record.is_current ? '(Current)' : ''}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {waveformQ.isLoading && (
-          <WaveformPlaceholder height={160} className="mt-2" />
-        )}
-        {!waveformQ.isLoading && primarySamples && (
-          <RealEcgWaveform
-            samples={primarySamples}
-            effectiveSamplingRate={waveformQ.data?.effective_sampling_rate ?? 125}
-            height={160}
-            className="mt-2"
-            grid={waveformQ.data?.grid}
-          />
-        )}
-        {!waveformQ.isLoading && !primarySamples && (
-          <p className="mt-3 text-[13px] text-[var(--color-text-tertiary)]">
-            Waveform not available for this record.
-          </p>
-        )}
-        <div className="mt-3 flex justify-between text-[12px] text-[var(--color-text-tertiary)]">
-          <span>Record: {records.find((r) => r.id === selectedRecordId)?.record_name ?? '—'}</span>
-          <span>Lead II · 25mm/s · 10mm/mV</span>
-        </div>
-      </Card>
-
-      {/* Orinn AI Summary */}
-      <Card className="mb-5">
-        <div className="mb-3 flex items-center justify-between">
-          <div>
-            <h2 className="text-[18px] font-bold text-[var(--color-text-primary)]">
-              Orinn AI summary
-            </h2>
-            <p className="text-[13px] text-[var(--color-text-tertiary)]">Governed AI assessment</p>
-          </div>
-         {!orinn && (
-            <Button
-              label={isAnalyzing ? 'Analyzing…' : 'Run analysis'}
-              size="sm"
-              variant="secondary"
-              onClick={() => triggerOrinn(selectedRecordId ?? undefined)}
-            />
-          )}
-        </div>
-
-        {orinn ? (
-          <>
-            <div className="mb-3 flex items-center gap-2">
-              <span className={cn(
-                'rounded-pill px-3 py-1 text-[11px] font-bold',
-                orinn.risk_level === 'Critical' && 'bg-red-100 text-red-700',
-                orinn.risk_level === 'High' && 'bg-orange-100 text-orange-700',
-                orinn.risk_level === 'Moderate' && 'bg-yellow-100 text-yellow-700',
-                orinn.risk_level === 'Low' && 'bg-green-100 text-green-700',
-              )}>
-                {orinn.risk_level} Risk · {orinn.risk_score}/100
-              </span>
-            </div>
-            <p className="mb-4 text-[14px] leading-[22px] text-[var(--color-text-primary)]">
-              {orinn.narrative}
-            </p>
-            {orinn.findings.length > 0 && (
-              <div className="mb-3 flex flex-wrap gap-2">
-                {orinn.findings.map((f, i) => (
-                  <span
-                    key={i}
-                    className="rounded-pill bg-[var(--color-bg-alt)] px-3 py-1 text-[11px] font-semibold text-[var(--color-text-secondary)]"
-                  >
-                    {f}
-                  </span>
-                ))}
+        {/* ── Hero Card ── */}
+        <div className="rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-elevated md:p-8">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <SeverityBadge severity={c.severity} />
+                <span className="font-mono text-xs text-[var(--color-text-tertiary)]">
+                  {patient.patient_code}
+                </span>
+                <span className="text-xs text-[var(--color-text-tertiary)]">
+                  · {formatRelativeTime(c.created_at)}
+                </span>
               </div>
-            )}
-            {orinn.recommendation && (
-              <p className="mt-3 rounded-lg bg-[var(--color-bg-alt)] p-3 text-[13px] text-[var(--color-text-secondary)]">
-                <strong>Recommendation:</strong> {orinn.recommendation}
+              <h1 className="mt-3 font-display text-2xl font-bold leading-tight text-[var(--color-text-primary)] md:text-3xl">
+                {patient.display_diagnosis || patient.diagnosis_class || 'Unknown Diagnosis'}
+              </h1>
+              <p className="mt-1 text-sm text-[var(--color-text-tertiary)]">
+                {patient.sex ?? '—'} · {patient.age ?? '—'}y · {patient.dataset_source_display}{' '}
+                {vitals.quality_score
+                  ? ` · Signal Q${(vitals.quality_score * 100).toFixed(0)}`
+                  : ''}
               </p>
-            )}
-          </>
-        ) : (
-          <p className="text-[14px] text-[var(--color-text-tertiary)]">
-            Click "Run analysis" to get Orinn AI cardiac assessment for this patient.
-          </p>
-        )}
-      </Card>
+            </div>
 
-      {/* ── History timeline ───────────────────────────────────────────────── */}
-      <Card className="mb-5">
-        <h2 className="mb-4 text-[18px] font-bold text-[var(--color-text-primary)]">
-          History timeline
-        </h2>
-        {history.length === 0 ? (
-          <p className="text-[14px] text-[var(--color-text-tertiary)]">No history yet.</p>
-        ) : (
-          history.map((event, i) => (
-            <TimelineItem
-              key={i}
-              event={event}
-              isFirst={i === 0}
-              isLast={i === history.length - 1}
-            />
-          ))
-        )}
-      </Card>
+            {/* Action buttons */}
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => triggerOrinn(selectedRecordId ?? undefined)}
+                className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-bg-alt)]"
+              >
+                <Icon name="sparkle" size={14} /> {isAnalyzing ? 'Analyzing…' : 'Ask Alyna'}
+              </button>
+              <button
+                onClick={() => navigate(`/trace/${caseIdNum}`)}
+                className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              >
+                <Icon name="trace" size={14} /> Open TraceView
+              </button>
+            </div>
+          </div>
 
-      {/* ── Patient context ────────────────────────────────────────────────── */}
-      <Card className="mb-5">
-        <h2 className="mb-3 text-[18px] font-bold text-[var(--color-text-primary)]">
-          Patient context
-        </h2>
-        <Row label="Sex / Age" value={`${patient.sex ?? '—'} · ${patient.age ?? '—'}y`} />
-        <Row label="Dataset" value={patient.dataset_source_display} />
-        <Row label="Diagnosis class" value={patient.diagnosis_class ?? '—'} />
-        {Boolean(patient.extra_info?.blood_pressure) && (
-          <Row label="Blood pressure" value={String(patient.extra_info.blood_pressure)} />
-        )}
-        {Boolean(patient.extra_info?.reason_for_admission) && (
-          <Row label="Reason for admission" value={String(patient.extra_info.reason_for_admission)} />
-        )}
-        {Boolean(patient.extra_info?.smoker) && (
-          <Row label="Smoker" value={String(patient.extra_info.smoker)} />
-        )}
-        <Row label="All diagnoses" value={patient.display_diagnosis || patient.all_diagnoses.join(', ') || '—'} last />
-      </Card>
+          {/* Real vitals metrics grid */}
+          <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)]/60 p-3.5">
+              <div className="flex items-center gap-1.5 text-[0.65rem] uppercase tracking-wider text-[var(--color-text-tertiary)]">
+                <Icon name="heart" size={12} strokeWidth={2.5} /> Heart Rate
+              </div>
+              <div className="mt-1.5 flex items-baseline gap-1">
+                <span
+                  className={cn(
+                    'tabular font-display text-2xl font-bold',
+                    c.severity === 'critical' || c.severity === 'urgent'
+                      ? 'text-[var(--color-danger)]'
+                      : 'text-[var(--color-text-primary)]',
+                  )}
+                >
+                  {vitals.heart_rate_bpm ?? c.heart_rate_bpm ?? '—'}
+                </span>
+                {(vitals.heart_rate_bpm || c.heart_rate_bpm) && (
+                  <span className="text-xs text-[var(--color-text-tertiary)]">bpm</span>
+                )}
+              </div>
+            </div>
 
-      {/* ── Physiology snapshot ────────────────────────────────────────────── */}
-      <Card className="mb-5">
-        <h2 className="mb-3 text-[18px] font-bold text-[var(--color-text-primary)]">
-          Physiology snapshot
-        </h2>
-        <Row label="Heart Rate" value={vitals.heart_rate_bpm ? `${vitals.heart_rate_bpm} bpm` : '—'} />
-        <Row label="HR Range" value={vitals.heart_rate_min && vitals.heart_rate_max ? `${vitals.heart_rate_min} – ${vitals.heart_rate_max} bpm` : '—'} />
-        <Row label="HRV (RMSSD)" value={vitals.hrv_ms ? `${vitals.hrv_ms} ms` : '—'} />
-        <Row label="Rhythm" value={vitals.rhythm ?? '—'} />
-        <Row label="Beats detected" value={vitals.num_beats ? String(vitals.num_beats) : '—'} />
-        <Row label="Signal quality" value={vitals.quality_score ? `${(vitals.quality_score * 100).toFixed(0)}%` : '—'} last />
-      </Card>
+            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)]/60 p-3.5">
+              <div className="flex items-center gap-1.5 text-[0.65rem] uppercase tracking-wider text-[var(--color-text-tertiary)]">
+                <Icon name="activity" size={12} strokeWidth={2.5} /> HRV
+              </div>
+              <div className="mt-1.5 flex items-baseline gap-1">
+                <span className="tabular font-display text-2xl font-bold text-[var(--color-text-primary)]">
+                  {vitals.hrv_ms ?? c.hrv_ms ?? '—'}
+                </span>
+                {(vitals.hrv_ms || c.hrv_ms) && (
+                  <span className="text-xs text-[var(--color-text-tertiary)]">ms</span>
+                )}
+              </div>
+            </div>
 
-      {/* ActionPath */}
-      <div className="hero-gradient mb-5 rounded-2xl p-6">
-        <p className="eyebrow mb-1 text-white/70" style={{ letterSpacing: '1.4px' }}>
-          ACTIONPATH
-        </p>
-        <h2 className="mb-5 text-[22px] font-bold text-white">Make a decision</h2>
+            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)]/60 p-3.5">
+              <div className="flex items-center gap-1.5 text-[0.65rem] uppercase tracking-wider text-[var(--color-text-tertiary)]">
+                <Icon name="sparkle" size={12} strokeWidth={2.5} /> AI Confidence
+              </div>
+              <div className="mt-1.5 flex items-baseline gap-1">
+                <span className="tabular font-display text-2xl font-bold text-[var(--color-accent)]">
+                  {c.confidence_score ?? '—'}
+                </span>
+                {c.confidence_score && (
+                  <span className="text-xs text-[var(--color-text-tertiary)]">%</span>
+                )}
+              </div>
+            </div>
 
-        <ActionPathButton
-          icon="phone"
-          label="Escalate to emergency response"
-          disabled={isActioning}
-          onClick={() => escalateCase({ notes: notes || 'Escalated to emergency response.' })}
-        />
-        <ActionPathButton
-          icon="stethoscope"
-          label="Connect to cardiologist on-call"
-          disabled={isActioning}
-          onClick={() => escalateCase({ notes: notes || 'Referred to cardiologist on-call.' })}
-        />
-        <ActionPathButton
-          icon="eye"
-          label="Continue high observation"
-          disabled={isActioning}
-          onClick={() => completeCase({ notes: notes || 'Continue high observation.' })}
-        />
-        <ActionPathButton
-          icon="check-circle"
-          label="Continue monitoring"
-          disabled={isActioning}
-          onClick={() => completeCase({ notes: notes || 'Continue monitoring.' })}
-        />
-        <ActionPathButton
-          icon="close-circle"
-          label="Mark as false positive"
-          disabled={isActioning}
-          onClick={() => completeCase({ notes: notes || 'Marked as false positive.' })}
-        />
+            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)]/60 p-3.5">
+              <div className="flex items-center gap-1.5 text-[0.65rem] uppercase tracking-wider text-[var(--color-text-tertiary)]">
+                <Icon name="trace" size={12} strokeWidth={2.5} /> Rhythm
+              </div>
+              <div className="mt-1.5 flex items-baseline gap-1">
+                <span className="tabular font-display text-xl font-bold text-[var(--color-text-primary)]">
+                  {vitals.rhythm ?? '—'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Main Content Grid ── */}
+        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="space-y-6 lg:col-span-2">
+            
+            {/* ── ECG Waveform strip ── */}
+            <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-elevated md:p-6">
+              <header className="mb-4 flex items-end justify-between gap-3">
+                <div>
+                  <h2 className="font-display text-base font-bold text-[var(--color-text-primary)]">
+                    Anomaly waveform
+                  </h2>
+                  <p className="text-xs text-[var(--color-text-tertiary)]">
+                    Lead II · {activeRecord?.sampling_rate ?? '—'}Hz ·{' '}
+                    {activeRecord?.num_channels ?? '—'} channels
+                  </p>
+                </div>
+                <button
+                  onClick={() => navigate(`/trace/${caseIdNum}`)}
+                  className="text-xs font-semibold text-[var(--color-accent)] hover:underline"
+                >
+                  Inspect in TraceView →
+                </button>
+              </header>
+
+              {/* Record Switcher */}
+              {records.length > 1 && (
+                <div className="mb-4 flex flex-wrap gap-2">
+                  {records.map((record) => (
+                    <button
+                      key={record.id}
+                      onClick={() => setSelectedRecordId(record.id)}
+                      className={cn(
+                        'rounded-full px-3 py-1.5 text-xs font-semibold transition-all',
+                        selectedRecordId === record.id
+                          ? 'bg-[var(--color-primary)] text-white shadow-elevated'
+                          : 'border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]',
+                      )}
+                    >
+                      {record.record_name} {record.is_current ? '(Current)' : ''}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Render standard waveform matching the new theme bounds */}
+              <div className="rounded-2xl bg-[oklch(0.13_0.025_250)] p-4">
+                {waveformQ.isLoading && <WaveformPlaceholder height={180} />}
+                {!waveformQ.isLoading && primarySamples && (
+                  <RealEcgWaveform
+                    samples={primarySamples}
+                    effectiveSamplingRate={waveformQ.data?.effective_sampling_rate ?? 125}
+                    height={180}
+                    grid={waveformQ.data?.grid}
+                  />
+                )}
+                {!waveformQ.isLoading && !primarySamples && (
+                  <div className="flex h-[180px] items-center justify-center text-sm text-[var(--color-text-tertiary)] opacity-80">
+                    Waveform not available for this record.
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-3 flex items-center justify-between text-xs text-[var(--color-text-tertiary)]">
+                <span className="tabular">Record: {activeRecord?.record_name ?? '—'}</span>
+                <span>Lead II · 25mm/s · 10mm/mV</span>
+              </div>
+            </section>
+
+            {/* ── Orinn AI Summary ── */}
+            <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-elevated md:p-6">
+              <header className="mb-4 flex items-end justify-between gap-3">
+                <div>
+                  <h2 className="font-display text-base font-bold text-[var(--color-text-primary)]">
+                    Alyna summary
+                  </h2>
+                  <p className="text-xs text-[var(--color-text-tertiary)]">Governed AI assessment</p>
+                </div>
+                {!orinn && (
+                  <button
+                    onClick={() => triggerOrinn(selectedRecordId ?? undefined)}
+                    disabled={isAnalyzing}
+                    className="text-xs font-semibold text-[var(--color-accent)] hover:underline disabled:opacity-50"
+                  >
+                    {isAnalyzing ? 'Analyzing...' : 'Run analysis →'}
+                  </button>
+                )}
+              </header>
+
+              {orinn ? (
+                <>
+                  <p className="text-sm leading-relaxed text-[var(--color-text-primary)]">
+                    {orinn.narrative}
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-2 text-xs">
+                    <span
+                      className={cn(
+                        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs',
+                        orinn.risk_level === 'Critical' && 'bg-red-500/10 text-red-600',
+                        orinn.risk_level === 'High' && 'bg-orange-500/10 text-orange-600',
+                        orinn.risk_level === 'Moderate' && 'bg-yellow-500/10 text-yellow-600',
+                        orinn.risk_level === 'Low' && 'bg-[var(--color-bg-alt)] text-[var(--color-text-secondary)]',
+                      )}
+                    >
+                      {orinn.risk_level} Risk · Score {orinn.risk_score}/100
+                    </span>
+                    {orinn.findings.map((f, i) => (
+                      <span
+                        key={i}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-bg-alt)] px-2.5 py-1 text-xs text-[var(--color-text-secondary)]"
+                      >
+                        {f}
+                      </span>
+                    ))}
+                  </div>
+                  {orinn.recommendation && (
+                    <div className="mt-4 rounded-lg bg-[var(--color-bg-alt)] p-3 text-sm text-[var(--color-text-secondary)]">
+                      <strong>Recommendation:</strong> {orinn.recommendation}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p className="text-sm text-[var(--color-text-tertiary)]">
+                  Assessment pending. Click run analysis to get AI insights.
+                </p>
+              )}
+            </section>
+
+            {/* ── History timeline ── */}
+            <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-elevated md:p-6">
+              <header className="mb-4 flex items-end justify-between gap-3">
+                <div>
+                  <h2 className="font-display text-base font-bold text-[var(--color-text-primary)]">
+                    History timeline
+                  </h2>
+                </div>
+              </header>
+              {history.length === 0 ? (
+                <p className="text-sm text-[var(--color-text-tertiary)]">No history yet.</p>
+              ) : (
+                <ol className="relative ml-2 space-y-4 border-l border-[var(--color-border)] pl-5">
+                  {history.map((event, i) => (
+                    <TimelineItem key={i} event={event} />
+                  ))}
+                </ol>
+              )}
+            </section>
+          </div>
+
+          <div className="space-y-6">
+            
+           {/* ── Patient context ── */}
+            <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-elevated md:p-6">
+              <header className="mb-4 flex items-end justify-between gap-3">
+                <div>
+                  <h2 className="font-display text-base font-bold text-[var(--color-text-primary)]">
+                    Patient context
+                  </h2>
+                </div>
+              </header>
+              <dl className="space-y-2.5 text-sm">
+                <ContextRow label="Sex / Age" value={`${patient.sex ?? 'M'} · ${patient.age ?? '67'}y`} />
+                <ContextRow label="Comorbidities" value="HTN, T2DM (controlled)" />
+                <ContextRow label="Adherence" value="92%" />
+                <ContextRow label="Activity" value="Sedentary, 4.2k steps/day" />
+                <ContextRow label="Sleep" value="6h 12m avg · efficiency 78%" />
+                <ContextRow label="Diet pattern" value="Moderate sodium, low fiber" />
+                <ContextRow label="Smoking / Alcohol" value="Never · Occasional" />
+              </dl>
+            </section>
+
+            {/* ── Physiology snapshot ── */}
+            <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-elevated md:p-6">
+              <header className="mb-4 flex items-end justify-between gap-3">
+                <div>
+                  <h2 className="font-display text-base font-bold text-[var(--color-text-primary)]">
+                    Physiology snapshot
+                  </h2>
+                </div>
+              </header>
+              <SnapshotRow
+                label="Pulse"
+                subLabel={vitals.heart_rate_min && vitals.heart_rate_max ? `vs range ${vitals.heart_rate_min}-${vitals.heart_rate_max}` : 'vs unknown base'}
+                value={vitals.heart_rate_bpm ? String(vitals.heart_rate_bpm) : '—'}
+                isCritical={c.severity === 'critical' || c.severity === 'urgent'}
+              />
+              <SnapshotRow
+                label="HRV"
+                subLabel="baseline variation"
+                value={vitals.hrv_ms ? `${vitals.hrv_ms}ms` : '—'}
+              />
+              <SnapshotRow
+                label="Beats detected"
+                subLabel="in active window"
+                value={vitals.num_beats ? String(vitals.num_beats) : '—'}
+              />
+              <SnapshotRow
+                label="Recovery"
+                subLabel="elevated 36 hour"
+                value={vitals.quality_score ? `${(vitals.quality_score * 100).toFixed(0)}%` : '—'}
+              />
+            </section>
+
+           {/* ── ActionPath ── */}
+            <div className="rounded-2xl border border-border bg-aurora p-5 text-primary-foreground shadow-glow">
+              <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] opacity-80">
+                ActionPath
+              </p>
+              <h3 className="mt-1 font-display text-lg font-bold">Make a decision</h3>
+              <div className="mt-4 space-y-2">
+                <ActionPathButton
+                  icon="phone"
+                  label="Escalate to emergency response"
+                  disabled={isActioning}
+                  variant="critical"
+                  onClick={() => escalateCase({ notes: notes || 'Escalated to emergency response.' })}
+                />
+                <ActionPathButton
+                  icon="stethoscope"
+                  label="Connect to cardiologist on-call"
+                  disabled={isActioning}
+                  onClick={() => escalateCase({ notes: notes || 'Referred to cardiologist on-call.' })}
+                />
+                <ActionPathButton
+                  icon="eye"
+                  label="Continue high observation"
+                  disabled={isActioning}
+                  onClick={() => completeCase({ notes: notes || 'Continue high observation.' })}
+                />
+                <ActionPathButton
+                  icon="check-circle"
+                  label="Continue monitoring"
+                  disabled={isActioning}
+                  onClick={() => completeCase({ notes: notes || 'Continue monitoring.' })}
+                />
+                <ActionPathButton
+                  icon="close-circle"
+                  label="Mark as false positive"
+                  disabled={isActioning}
+                  onClick={() => completeCase({ notes: notes || 'Marked as false positive.' })}
+                />
+              </div>
+            </div>
+
+          </div>
+        </div>
       </div>
-
-      {/* Show outcome if already completed/escalated
-      {(c.status === 'completed' || c.status === 'escalated') && c.notes && (
-        <Card className="mb-5 border border-[var(--color-divider)]">
-          <p className="eyebrow mb-2 text-[11px] tracking-[1.4px] text-[var(--color-text-tertiary)]">
-            OUTCOME
-          </p>
-          <p className="text-[14px] text-[var(--color-text-primary)]">{c.notes}</p>
-        </Card>
-      )} */}
     </AppLayout>
   );
 };

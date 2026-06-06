@@ -98,62 +98,72 @@ export const TopBar = () => {
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-[var(--color-border)] bg-[var(--color-surface)]/80 px-4 backdrop-blur-md md:px-8">
 
       {/* Search box */}
-      <div className="relative flex-1">
-        <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2">
-          <Icon
-            name="search"
-            size={18}
-            color="var(--color-text-tertiary)"
-            strokeWidth={1.8}
+      <div className="hidden flex-1 items-center gap-2 md:flex">
+        <div className="relative w-full max-w-md">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="lucide lucide-search pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden="true"
+          >
+            <path d="m21 21-4.34-4.34"></path>
+            <circle cx="11" cy="11" r="8"></circle>
+          </svg>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => handleSearch(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onFocus={() => results.length > 0 && setShowDropdown(true)}
+            onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
+            placeholder="Search cases, patients, ECG patterns…"
+            className="h-9 w-full rounded-full border border-border bg-card/60 pl-9 pr-4 text-sm outline-none ring-ring focus:ring-2"
           />
-        </span>
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => handleSearch(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onFocus={() => results.length > 0 && setShowDropdown(true)}
-          onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
-          placeholder="Search cases, patients, ECG patterns…"
-          className="h-12 w-full rounded-pill border border-[var(--color-divider)] bg-[var(--color-surface)] pl-12 pr-5 text-[14px] text-[var(--color-text-primary)] outline-none transition placeholder:text-[var(--color-text-tertiary)] focus:border-[var(--color-primary)]"
-        />
 
-        {/* Dropdown results — compact + scrollable */}
-        {showDropdown && (
-          <div className="absolute left-0 right-0 top-[52px] z-50 max-h-[320px] overflow-y-auto rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] shadow-[0_8px_32px_rgba(10,37,64,0.12)]">
-            {isSearching ? (
-              <p className="px-4 py-3 text-[13px] text-[var(--color-text-tertiary)]">
-                Searching…
-              </p>
-            ) : results.length === 0 ? (
-              <p className="px-4 py-3 text-[13px] text-[var(--color-text-tertiary)]">
-                No cases found for "{query}"
-              </p>
-            ) : (
-              results.map((c) => (
-                <button
-                  key={c.id}
-                  onMouseDown={() => handleSelect(c)}
-                  className="flex w-full items-center gap-3 border-b border-[var(--color-divider)] px-4 py-2 text-left transition last:border-0 hover:bg-[var(--color-bg-alt)]"
-                >
-                  <span className={cn('h-2 w-2 shrink-0 rounded-full', severityColor[c.severity] ?? 'bg-gray-400')} />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13px] font-semibold text-[var(--color-text-primary)]">
-                      {c.display_diagnosis || c.diagnosis || '—'}
-                    </p>
-                    <p className="truncate text-[11px] text-[var(--color-text-tertiary)]">
-                      {c.patient_code} · {c.sex ?? '—'} · {c.age ?? '—'}y · {c.dataset_source_display}
-                    </p>
-                  </div>
-                  <span className="shrink-0 text-[10px] font-bold uppercase tracking-wide text-[var(--color-text-tertiary)]">
-                    {c.status}
-                  </span>
-                </button>
-              ))
-            )}
-          </div>
-        )}
-      </div>
+          {/* Dropdown results — compact + scrollable */}
+          {showDropdown && (
+            <div className="absolute left-0 right-0 top-[52px] z-50 max-h-[320px] overflow-y-auto rounded-2xl border border-[var(--color-divider)] bg-[var(--color-surface)] shadow-[0_8px_32px_rgba(10,37,64,0.12)]">
+              {isSearching ? (
+                <p className="px-4 py-3 text-[13px] text-[var(--color-text-tertiary)]">
+                  Searching…
+                </p>
+              ) : results.length === 0 ? (
+                <p className="px-4 py-3 text-[13px] text-[var(--color-text-tertiary)]">
+                  No cases found for "{query}"
+                </p>
+              ) : (
+                results.map((c) => (
+                  <button
+                    key={c.id}
+                    onMouseDown={() => handleSelect(c)}
+                    className="flex w-full items-center gap-3 border-b border-[var(--color-divider)] px-4 py-2 text-left transition last:border-0 hover:bg-[var(--color-bg-alt)]"
+                  >
+                    <span className={cn('h-2 w-2 shrink-0 rounded-full', severityColor[c.severity] ?? 'bg-gray-400')} />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[13px] font-semibold text-[var(--color-text-primary)]">
+                        {c.display_diagnosis || c.diagnosis || '—'}
+                      </p>
+                      <p className="truncate text-[11px] text-[var(--color-text-tertiary)]">
+                        {c.patient_code} · {c.sex ?? '—'} · {c.age ?? '—'}y · {c.dataset_source_display}
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-[10px] font-bold uppercase tracking-wide text-[var(--color-text-tertiary)]">
+                      {c.status}
+                    </span>
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+      </div> 
 
       {/* Controls Container */}
       <div className="flex items-center gap-2">

@@ -366,9 +366,10 @@ export interface WaveformAnalysisResponse {
     T?: number;
     error?: string;
   };
-  wave_intervals?: {
+ wave_intervals?: {
     pr_interval_ms: number | null;
     qrs_duration_ms: number | null;
     qt_interval_ms: number | null;
+    qtc_interval_ms: number | null;
   };
 }

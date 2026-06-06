@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AppLayout } from '@/components/AppLayout';
 import { Card } from '@/components/Card';
-import { Button } from '@/components/Button';
 import { Icon, type IconName } from '@/components/Icon';
 import { RealEcgWaveform, WaveformPlaceholder } from '@/components/Waveform';
 import { useTraceView } from '@/hooks/useTraceView';
@@ -72,510 +71,472 @@ export const TraceViewPage = () => {
   } = useTraceView(caseIdNum);
 
   const hasWaveform = Boolean(primarySamples && primarySamples.length > 0);
-  const caseInfo = caseDetail?.case;
   const patientInfo = caseDetail?.patient;
 
-  // ── Case picker
+  // ── Case picker view ───────────────────────────────────────────────────────
   if (!caseIdNum) {
     return (
       <AppLayout>
-        <div className="mb-6 mt-4">
-          <h1 className="text-[26px] font-bold text-[var(--color-text-primary)]">TraceView</h1>
-          <p className="mt-1 text-[14px] text-[var(--color-text-secondary)]">
-            Select a case to inspect its ECG signal
-          </p>
-        </div>
-
-        {pickerLoading ? (
-          <div className="py-10 text-center text-[14px] text-[var(--color-text-secondary)]">
-            Loading cases…
+        <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8 md:py-10">
+          <div className="mb-6">
+            <h1 className="font-display text-2xl font-bold md:text-3xl text-[var(--color-text-primary)]">TraceView</h1>
+            <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+              Select a case to inspect its ECG signal
+            </p>
           </div>
-        ) : (
-          <>
-            {/* My claimed cases */}
-           <CasePickerSection
-              title={`My claimed cases · ${myCount}`}
-              cases={myCases}
-              onSelect={(id) => navigate(`/trace/${id}`)}
-              hasMore={hasMoreMyCases}
-              showingMore={showingMoreMyCases}
-              onLoadMore={loadMoreMyCases}
-              onLoadLess={loadLessMyCases}
-              loadingMore={myLoadingMore}
-            />
-            <CasePickerSection
-              title={`Live · unclaimed · ${liveCount}`}
-              cases={liveCases}
-              onSelect={(id) => navigate(`/trace/${id}`)}
-              hasMore={hasMoreLiveCases}
-              showingMore={showingMoreLiveCases}
-              onLoadMore={loadMoreLiveCases}
-              onLoadLess={loadLessLiveCases}
-              loadingMore={liveLoadingMore}
-            />
-            {myCases.length === 0 && liveCases.length === 0 && (
-              <Card>
-                <p className="py-8 text-center text-[14px] text-[var(--color-text-secondary)]">
-                  No active cases right now.
-                </p>
-              </Card>
-            )}
-          </>
-        )}
+
+          {pickerLoading ? (
+            <div className="py-10 text-center text-sm text-[var(--color-text-secondary)]">
+              Loading cases…
+            </div>
+          ) : (
+            <>
+              <CasePickerSection
+                title={`My claimed cases · ${myCount}`}
+                cases={myCases}
+                onSelect={(id) => navigate(`/trace/${id}`)}
+                hasMore={hasMoreMyCases}
+                showingMore={showingMoreMyCases}
+                onLoadMore={loadMoreMyCases}
+                onLoadLess={loadLessMyCases}
+                loadingMore={myLoadingMore}
+              />
+              <CasePickerSection
+                title={`Live · unclaimed · ${liveCount}`}
+                cases={liveCases}
+                onSelect={(id) => navigate(`/trace/${id}`)}
+                hasMore={hasMoreLiveCases}
+                showingMore={showingMoreLiveCases}
+                onLoadMore={loadMoreLiveCases}
+                onLoadLess={loadLessLiveCases}
+                loadingMore={liveLoadingMore}
+              />
+              {myCases.length === 0 && liveCases.length === 0 && (
+                <Card>
+                  <p className="py-8 text-center text-sm text-[var(--color-text-secondary)]">
+                    No active cases right now.
+                  </p>
+                </Card>
+              )}
+            </>
+          )}
+        </div>
       </AppLayout>
     );
   }
 
-  // Waveform view
+  // ── Detail / Waveform view ─────────────────────────────────────────────────
   return (
     <AppLayout>
-      {/* Page header */}
-      <div className="mb-4 mt-4 flex flex-wrap items-center justify-between gap-3">
-        {/* Left — title + subtitle */}
-        <div>
-          <h1 className="text-[24px] font-bold text-[var(--color-text-primary)]">TraceView</h1>
-          <p className="mt-0.5 text-[13px] text-[var(--color-text-secondary)]">
-            {patientInfo?.patient_code ?? `Case #${caseId}`}
-            {` · Lead ${selectedLead}`}
-            {waveformData?.grid?.paper_speed_mm_per_sec
-              ? ` · ${waveformData.grid.paper_speed_mm_per_sec} mm/s`
-              : ''}
-            {waveformData?.grid?.amplitude_mm_per_mv
-              ? ` · ${waveformData.grid.amplitude_mm_per_mv} mm/mV`
-              : ''}
-            {analysis?.quality_score
-              ? ` · Q${Math.round(analysis.quality_score * 100)}`
-              : ''}
-          </p>
-        </div>
-
-        {/* Right — toolbar + view toggle + switch */}
-        <div className="flex items-center gap-3">
-          {/* Zoom + actions toolbar — now top-right */}
-          <div className="flex items-center gap-1 rounded-pill border border-[var(--color-divider)] bg-[var(--color-surface)] px-2 py-1">
-            <ToolBtn icon="minus" onClick={zoomOut} />
-            <span className="min-w-[42px] text-center text-[13px] font-semibold text-[var(--color-text-primary)]">
-              {zoom.toFixed(2)}×
-            </span>
-            <ToolBtn icon="plus" onClick={zoomIn} />
-            <span className="mx-1 h-4 w-px bg-[var(--color-divider)]" />
-            <ToolBtn icon="expand" />
-            <ToolBtn icon="bookmark" />
-            <ToolBtn icon="share" />
-            <ToolBtn icon="book" />
+      <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8 md:py-10">
+        
+        {/* Page header (Target UI) */}
+        <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="font-display text-2xl font-bold md:text-3xl text-[var(--color-text-primary)]">
+              TraceView
+            </h1>
+            <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+              {patientInfo?.patient_code ?? `Case #${caseId}`}
+              {` · Lead ${selectedLead}`}
+              {waveformData?.grid?.paper_speed_mm_per_sec
+                ? ` · ${waveformData.grid.paper_speed_mm_per_sec} mm/s`
+                : ' · 25 mm/s'}
+              {waveformData?.grid?.amplitude_mm_per_mv
+                ? ` · ${waveformData.grid.amplitude_mm_per_mv} mm/mV`
+                : ' · 10 mm/mV'}
+              {analysis?.quality_score
+                ? ` · Q${Math.round(analysis.quality_score * 100)}`
+                : ''}
+            </p>
           </div>
-
-          {/* View toggle */}
-          <div className="flex overflow-hidden rounded-pill border border-[var(--color-divider)] bg-[var(--color-surface)]">
-            <ViewToggleBtn
-              active={viewMode === 'strip'}
-              onClick={() => setViewMode('strip')}
-              label="Strip"
-            />
-            <ViewToggleBtn
-              active={viewMode === '12lead'}
-              onClick={() => setViewMode('12lead')}
-              label="12-lead"
-            />
-          </div>
-
-          {/* Switch case */}
-          <button
-            onClick={() => navigate('/trace')}
-            className="flex items-center gap-1.5 rounded-pill border border-[var(--color-divider)] bg-[var(--color-surface)] px-3 py-1.5 text-[12px] font-semibold text-[var(--color-text-secondary)] transition hover:bg-[var(--color-bg-alt)]"
-          >
-            <Icon name="cases" size={13} color="currentColor" />
-            Switch case
-          </button>
-        </div>
-      </div>
-
-      {/* Loading skeleton */}
-      {isLoading && (
-        <>
-          <WaveformStrip label="Before — loading…" lead={selectedLead}>
-            <WaveformPlaceholder height={120} />
-          </WaveformStrip>
-          <WaveformStrip label="During anomaly — loading…" highlighted lead={selectedLead}>
-            <WaveformPlaceholder height={120} />
-          </WaveformStrip>
-          <WaveformStrip label="After — loading…" lead={selectedLead}>
-            <WaveformPlaceholder height={120} />
-          </WaveformStrip>
-        </>
-      )}
-
-      {!isLoading && (
-        <>
-          <div className="mb-3 flex flex-wrap items-center gap-2">
-            {/* Record tabs */}
-            {records.length > 1 && (
-              <div className="flex flex-wrap items-center gap-1.5">
-                {records.map((rec: RecordsIndexRecord) => (
-                  <button
-                    key={rec.id}
-                    onClick={() => selectRecord(rec.id)}
-                    className={cn(
-                      'rounded-pill border px-3 py-1 text-[12px] font-semibold transition',
-                      rec.id === activeRecordId
-                        ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-white'
-                        : 'border-[var(--color-divider)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] hover:border-[var(--color-primary)]',
-                    )}
-                  >
-                    {rec.label || rec.record_name}
-                    {rec.duration_seconds ? ` · ${rec.duration_seconds.toFixed(0)}s` : ''}
-                  </button>
-                ))}
-                <span className="text-[12px] text-[var(--color-text-tertiary)]">
-                  {activeRecordIndex + 1} of {totalRecords}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Lead selector — strip mode only */}
-          {viewMode === 'strip' && availableLeads.length > 1 && (
-            <div className="mb-3 flex flex-wrap items-center gap-1.5">
-              <span className="text-[11px] uppercase tracking-[1px] text-[var(--color-text-tertiary)]">
-                Lead
+          
+          <div className="flex items-center gap-3">
+            {/* Zoom & Action Toolbar */}
+            <div className="flex items-center gap-1.5 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] p-1.5">
+              <ToolBtn icon="minus" onClick={zoomOut} />
+              <span className="px-2 text-xs font-mono tabular text-[var(--color-text-primary)]">
+                {zoom.toFixed(2)}×
               </span>
-              {availableLeads.map((lead) => (
-                <button
-                  key={lead}
-                  onClick={() => setSelectedLead(lead)}
-                  className={cn(
-                    'rounded-pill border px-2.5 py-0.5 text-[11px] font-semibold transition',
-                    selectedLead === lead
-                      ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-white'
-                      : 'border-[var(--color-divider)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] hover:border-[var(--color-primary)]',
-                  )}
-                >
-                  {lead}
-                </button>
-              ))}
+              <ToolBtn icon="plus" onClick={zoomIn} />
+              <div className="mx-1 h-5 w-px bg-[var(--color-border)]" />
+              <ToolBtn icon="expand" />
+              <ToolBtn icon="bookmark" />
+              <ToolBtn icon="share" />
+              <ToolBtn icon="book" />
             </div>
-          )}
 
-          {/* ── 12-lead grid view ─────────────────────────────────────────── */}
-          {viewMode === '12lead' && (
-            <>
-              {waveformLoading ? (
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-                  {Array.from({ length: 12 }).map((_, i) => (
-                    <WaveformPlaceholder key={i} height={90} />
-                  ))}
-                </div>
-              ) : Object.keys(allLeadSamples).length > 0 ? (
-                <div className="mb-4 grid grid-cols-2 gap-2 md:grid-cols-3">
-                  {availableLeads.map((lead) => {
-                    const samples = allLeadSamples[lead] ?? allLeadSamples[lead.toLowerCase()];
-                    if (!samples) return null;
-                    const isAnomalyLead = lead.toUpperCase() === 'II';
-                    return (
-                      <button
-                        key={lead}
-                        onClick={() => {
-                          setSelectedLead(lead);
-                          setViewMode('strip');
-                        }}
-                        className="overflow-hidden rounded-lg text-left transition hover:ring-1 hover:ring-[var(--color-primary)]"
-                        style={{ backgroundColor: '#0E1B2C' }}
-                      >
-                        <div className="flex items-center justify-between px-2.5 pt-2 pb-1">
-                          <span
-                            className={cn(
-                              'text-[10px] font-bold uppercase tracking-[1.1px]',
-                              isAnomalyLead ? 'text-[#FF6E7A]' : 'text-white/60',
-                            )}
-                          >
-                            {lead}
-                            {isAnomalyLead && ' ★'}
-                          </span>
-                          <span className="text-[9px] text-white/30">25mm/s</span>
-                        </div>
-                        <RealEcgWaveform
-                          samples={samples}
-                          effectiveSamplingRate={effectiveSamplingRate}
-                          height={70}
-                          strokeColor={isAnomalyLead ? '#FF6E7A' : '#4EECD8'}
-                          grid={waveformData?.grid}
-                        />
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : (
-                <Card className="mb-4">
-                  <p className="py-4 text-center text-[14px] text-[var(--color-text-tertiary)]">
-                    No waveform data available.
-                  </p>
-                </Card>
-              )}
-            </>
-          )}
+            {/* Preserved Functionality: View Toggle */}
+            <div className="hidden md:flex overflow-hidden rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] p-0.5">
+              <ViewToggleBtn
+                active={viewMode === 'strip'}
+                onClick={() => setViewMode('strip')}
+                label="Strip"
+              />
+              <ViewToggleBtn
+                active={viewMode === '12lead'}
+                onClick={() => setViewMode('12lead')}
+                label="12-lead"
+              />
+            </div>
 
-          {/* Strip view */}
-          {viewMode === 'strip' && (
-            <>
-              {/* Before */}
-              <WaveformStrip
-                label={
-                  segments.before
-                    ? `Before · ${segments.before.start_sec}s – ${segments.before.end_sec}s`
-                    : `Before · Lead ${selectedLead}`
-                }
-                lead={selectedLead}
-              >
-                {waveformLoading ? (
-                  <WaveformPlaceholder height={120} />
-                ) : segments.before ? (
-                  segments.before.samples.length > 0 ? (
-                    <RealEcgWaveform
-                      samples={primarySamples ? primarySamples.slice(Math.floor(segments.before.start_sec * effectiveSamplingRate), Math.ceil(segments.before.end_sec * effectiveSamplingRate)) : []}
-                      effectiveSamplingRate={effectiveSamplingRate}
-                      height={120}
-                      grid={waveformData?.grid}
-                    />
-                  ) : (
-                    <NoSignal message="No pre-anomaly data available. Anomaly started at the beginning of the recording." />
-                  )
-                ) : primarySamples ? (
-                  <RealEcgWaveform
-                    samples={primarySamples.slice(0, Math.floor(primarySamples.length / 3))}
-                    effectiveSamplingRate={effectiveSamplingRate}
-                    height={120}
-                  />
-                ) : (
-                  <NoSignal />
-                )}
-              </WaveformStrip>
+            {/* Preserved Functionality: Switch case */}
+            <button
+              onClick={() => navigate('/trace')}
+              className="flex h-9 items-center gap-1.5 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-4 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-[var(--color-bg-alt)]"
+            >
+              Switch case
+            </button>
+          </div>
+        </header>
 
-              {/* During anomaly */}
-              <WaveformStrip
-                label={
-                  segments.anomaly
-                    ? `During anomaly · ${segments.anomaly.start_sec}s – ${segments.anomaly.end_sec}s`
-                    : `During anomaly · Lead ${selectedLead}`
-                }
-                highlighted
-                lead={selectedLead}
-              >
-                {waveformLoading ? (
-                  <WaveformPlaceholder height={120} />
-                ) : segments.anomaly?.samples?.length ? (
-                  <RealEcgWaveform
-                    samples={primarySamples ? primarySamples.slice(Math.floor(segments.anomaly.start_sec * effectiveSamplingRate), Math.ceil(segments.anomaly.end_sec * effectiveSamplingRate)) : []}
-                    effectiveSamplingRate={effectiveSamplingRate}
-                    height={120}
-                    strokeColor="#FF6E7A"
-                    grid={waveformData?.grid}
-                  />
-                ) : primarySamples ? (
-                  <RealEcgWaveform
-                    samples={primarySamples.slice(
-                      Math.floor(primarySamples.length / 3),
-                      Math.floor((primarySamples.length / 3) * 2),
-                    )}
-                    effectiveSamplingRate={effectiveSamplingRate}
-                    height={120}
-                    strokeColor="#FF6E7A"
-                  />
-                ) : (
-                  <NoSignal />
-                )}
-              </WaveformStrip>
+        {/* Loading skeleton */}
+        {isLoading && (
+          <div className="space-y-4">
+            <WaveformStrip label="Before — loading…" rightLabel={`Lead ${selectedLead}`}>
+              <WaveformPlaceholder height={120} />
+            </WaveformStrip>
+            <WaveformStrip label="During anomaly — loading…" highlighted rightLabel={`Lead ${selectedLead}`}>
+              <WaveformPlaceholder height={120} />
+            </WaveformStrip>
+            <WaveformStrip label="After — loading…" rightLabel={`Lead ${selectedLead}`}>
+              <WaveformPlaceholder height={120} />
+            </WaveformStrip>
+          </div>
+        )}
 
-             {/* After */}
-              <WaveformStrip
-                label={
-                  segments.after
-                    ? `After · ${segments.after.start_sec}s – ${segments.after.end_sec}s`
-                    : `After · Lead ${selectedLead}`
-                }
-                lead={selectedLead}
-              >
-                {waveformLoading ? (
-                  <WaveformPlaceholder height={120} />
-               ) : segments.after ? (
-                  segments.after.samples.length > 0 ? (
-                    <RealEcgWaveform
-                      samples={primarySamples ? primarySamples.slice(Math.floor(segments.after.start_sec * effectiveSamplingRate), Math.ceil(segments.after.end_sec * effectiveSamplingRate)) : []}
-                      effectiveSamplingRate={effectiveSamplingRate}
-                      height={120}
-                      grid={waveformData?.grid}
-                    />
-                  ) : (
-                    <NoSignal message="No post-anomaly data available. Recording ended during the anomaly." />
-                  )
-                ) : primarySamples ? (
-                  <RealEcgWaveform
-                    samples={primarySamples.slice(Math.floor((primarySamples.length / 3) * 2))}
-                    effectiveSamplingRate={effectiveSamplingRate}
-                    height={120}
-                  />
-                ) : (
-                  <NoSignal />
-                )}
-              </WaveformStrip>
-
-              {/* Full recording */}
-              {hasWaveform && !waveformLoading && (
-                <WaveformStrip
-                  label={`Full recording · Lead ${selectedLead} · ECG ${activeRecordIndex + 1} of ${totalRecords}`}
-                  lead={selectedLead}
-                >
-                  <div className="overflow-x-auto">
-                    <RealEcgWaveform
-                      samples={primarySamples!}
-                      effectiveSamplingRate={effectiveSamplingRate}
-                      displaySeconds={10 * zoom}
-                      height={120}
-                      minWidth={600}
-                      grid={waveformData?.grid}
-                    />
-                  </div>
-                </WaveformStrip>
-              )}
-
-              {!waveformLoading && !hasWaveform && (
-                <Card className="mb-4">
-                  <p className="py-4 text-center text-[14px] text-[var(--color-text-tertiary)]">
-                    No waveform signal available for this record.
-                  </p>
-                </Card>
-              )}
-            </>
-          )}
-
-          {/* Metrics */}
-          {analysis && (
-            <Card className="mb-4">
-              <h2 className="mb-4 text-[17px] font-bold text-[var(--color-text-primary)]">
-                Waveform analysis
-              </h2>
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                {analysis.heart_rate_bpm != null && (
-                  <MetricBox label="Heart rate" value={`${Math.round(analysis.heart_rate_bpm)} bpm`} />
-                )}
-                {analysis.hrv_ms != null && (
-                  <MetricBox label="HRV (RMSSD)" value={`${Math.round(analysis.hrv_ms)} ms`} />
-                )}
-                {analysis.rhythm && (
-                  <MetricBox label="Rhythm" value={analysis.rhythm} />
-                )}
-                {analysis.quality_score != null && (
-                  <MetricBox
-                    label="Signal quality"
-                    value={`${Math.round(analysis.quality_score * 100)}%`}
-                  />
-                )}
-                {analysis.wave_intervals?.pr_interval_ms != null && (
-                  <MetricBox
-                    label="PR interval"
-                    value={`${Math.round(analysis.wave_intervals.pr_interval_ms)} ms`}
-                  />
-                )}
-                {analysis.wave_intervals?.qrs_duration_ms != null && (
-                  <MetricBox
-                    label="QRS duration"
-                    value={`${Math.round(analysis.wave_intervals.qrs_duration_ms)} ms`}
-                  />
-                )}
-                {analysis.wave_intervals?.qt_interval_ms != null && (
-                  <MetricBox
-                    label="QT interval"
-                    value={`${Math.round(analysis.wave_intervals.qt_interval_ms)} ms`}
-                  />
-                )}
-                {analysis.num_beats != null && (
-                  <MetricBox label="Beats detected" value={String(analysis.num_beats)} />
-                )}
-              </div>
-            </Card>
-          )}
-
-         {/* Event bookmarks — derived from real segment timestamps */}
-          {(segments.before || segments.anomaly || segments.after) && (() => {
-            const onsetSec   = segments.anomaly?.start_sec ?? null;
-            const peakSec    = onsetSec !== null && segments.anomaly?.end_sec != null
-              ? Math.round((onsetSec + segments.anomaly.end_sec) / 2)
-              : null;
-            const resolSec   = segments.after?.start_sec ?? segments.anomaly?.end_sec ?? null;
-
-            const bookmarks: { label: string; offsetSec: number | null }[] = [
-              { label: 'Onset',      offsetSec: onsetSec },
-              { label: 'Peak',       offsetSec: peakSec },
-              { label: 'Resolution', offsetSec: resolSec },
-            ].filter((b) => b.offsetSec !== null);
-
-            if (bookmarks.length === 0) return null;
-
-            return (
-              <Card className="mb-4">
-                <h2 className="mb-3 text-[16px] font-bold text-[var(--color-text-primary)]">
-                  Event bookmarks
-                </h2>
-                <div className="flex flex-col gap-2">
-                  {bookmarks.map((bm, i) => (
+        {!isLoading && (
+          <>
+            {/* Record tabs & Lead selector (Preserved functionality) */}
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              {records.length > 1 && (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {records.map((rec: RecordsIndexRecord) => (
                     <button
-                      key={i}
-                      className="flex items-center justify-between rounded-xl bg-[var(--color-bg-alt)] px-4 py-3 text-left transition hover:bg-[var(--color-divider)]"
-                      onClick={() => {
-                        /* scroll/seek to timestamp — hook extension point */
-                      }}
+                      key={rec.id}
+                      onClick={() => selectRecord(rec.id)}
+                      className={cn(
+                        'rounded-full border px-3 py-1.5 text-xs font-semibold transition-all',
+                        rec.id === activeRecordId
+                          ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-white shadow-elevated'
+                          : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]',
+                      )}
                     >
-                      <span className="text-[14px] font-medium text-[var(--color-text-primary)]">
-                        {bm.label}{' '}
-                        <span className="text-[var(--color-text-tertiary)]">
-                          T+{bm.offsetSec}s
-                        </span>
-                      </span>
-                      <span className="text-[13px] text-[var(--color-text-tertiary)]">
-                        jump →
-                      </span>
+                      {rec.label || rec.record_name}
+                      {rec.duration_seconds ? ` · ${rec.duration_seconds.toFixed(0)}s` : ''}
+                    </button>
+                  ))}
+                  <span className="ml-2 text-xs text-[var(--color-text-tertiary)]">
+                    {activeRecordIndex + 1} of {totalRecords}
+                  </span>
+                </div>
+              )}
+
+              {viewMode === 'strip' && availableLeads.length > 1 && (
+                <div className="ml-auto flex flex-wrap items-center gap-1.5">
+                  <span className="text-[11px] uppercase tracking-[1px] text-[var(--color-text-tertiary)]">
+                    Lead
+                  </span>
+                  {availableLeads.map((lead) => (
+                    <button
+                      key={lead}
+                      onClick={() => setSelectedLead(lead)}
+                      className={cn(
+                        'rounded-full border px-2.5 py-1 text-[11px] font-semibold transition',
+                        selectedLead === lead
+                          ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-white'
+                          : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]',
+                      )}
+                    >
+                      {lead}
                     </button>
                   ))}
                 </div>
-              </Card>
-            );
-          })()}
-
-          {/* Annotation */}
-          <Card className="mb-4">
-            <h2 className="mb-3 text-[17px] font-bold text-[var(--color-text-primary)]">
-              Annotation
-            </h2>
-            <div className="rounded-lg border border-[var(--color-divider)] bg-[var(--color-surface)] p-3">
-              <textarea
-                placeholder="Add a clinician note for this strip…"
-                value={annotation}
-                onChange={(e) => setAnnotation(e.target.value)}
-                rows={3}
-                className="w-full resize-none bg-transparent text-[14px] text-[var(--color-text-primary)] outline-none placeholder:text-[var(--color-text-tertiary)]"
-              />
+              )}
             </div>
-            <Button
-              label="Save annotation"
-              onClick={saveAnnotation}
-              fullWidth
-              size="lg"
-              className="mt-3"
-            />
-          </Card>
-        </>
-      )}
+
+            {/* ── 12-lead grid view ── */}
+            {viewMode === '12lead' && (
+              <>
+                {waveformLoading ? (
+                  <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+                    {Array.from({ length: 12 }).map((_, i) => (
+                      <WaveformPlaceholder key={i} height={90} />
+                    ))}
+                  </div>
+                ) : Object.keys(allLeadSamples).length > 0 ? (
+                  <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3">
+                    {availableLeads.map((lead) => {
+                      const samples = allLeadSamples[lead] ?? allLeadSamples[lead.toLowerCase()];
+                      if (!samples) return null;
+                      const isAnomalyLead = lead.toUpperCase() === 'II';
+                      return (
+                        <button
+                          key={lead}
+                          onClick={() => {
+                            setSelectedLead(lead);
+                            setViewMode('strip');
+                          }}
+                          className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[oklch(0.13_0.025_250)] text-left transition hover:border-[var(--color-primary)] hover:ring-1 hover:ring-[var(--color-primary)]"
+                        >
+                          <div className="flex items-center justify-between px-3 pt-2.5 pb-1">
+                            <span
+                              className={cn(
+                                'text-[11px] font-bold uppercase tracking-[1.1px]',
+                                isAnomalyLead ? 'text-[#FF6E7A]' : 'text-white/60',
+                              )}
+                            >
+                              {lead}
+                              {isAnomalyLead && ' ★'}
+                            </span>
+                            <span className="text-[10px] text-white/30 font-mono">25mm/s</span>
+                          </div>
+                          <div className="px-2 pb-2">
+                            <RealEcgWaveform
+                              samples={samples}
+                              effectiveSamplingRate={effectiveSamplingRate}
+                              height={70}
+                              strokeColor={isAnomalyLead ? '#FF6E7A' : '#4EECD8'}
+                              grid={waveformData?.grid}
+                            />
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <Card className="mb-4">
+                    <p className="py-4 text-center text-sm text-[var(--color-text-tertiary)]">
+                      No waveform data available.
+                    </p>
+                  </Card>
+                )}
+              </>
+            )}
+
+            {/* ── Strip view ── */}
+            {viewMode === 'strip' && (
+              <div className="space-y-4">
+                
+                {/* Before */}
+                <WaveformStrip
+                  label={`Before · ${segments.before ? `${segments.before.start_sec}s → ${segments.before.end_sec}s` : 'Unknown timeframe'}`}
+                  rightLabel={`${selectedLead} · 25mm/s`}
+                >
+                  {waveformLoading ? (
+                    <WaveformPlaceholder height={120} />
+                  ) : segments.before ? (
+                    segments.before.samples.length > 0 ? (
+                      <RealEcgWaveform
+                        samples={primarySamples ? primarySamples.slice(Math.floor(segments.before.start_sec * effectiveSamplingRate), Math.ceil(segments.before.end_sec * effectiveSamplingRate)) : []}
+                        effectiveSamplingRate={effectiveSamplingRate}
+                        height={120}
+                        grid={waveformData?.grid}
+                      />
+                    ) : (
+                      <NoSignal message="No pre-anomaly data available." />
+                    )
+                  ) : primarySamples ? (
+                    <RealEcgWaveform
+                      samples={primarySamples.slice(0, Math.floor(primarySamples.length / 3))}
+                      effectiveSamplingRate={effectiveSamplingRate}
+                      height={120}
+                    />
+                  ) : (
+                    <NoSignal />
+                  )}
+                </WaveformStrip>
+
+                {/* During anomaly */}
+                <WaveformStrip
+                  label={`During anomaly · ${segments.anomaly ? `${segments.anomaly.start_sec}s → ${segments.anomaly.end_sec}s` : 'Unknown timeframe'}`}
+                  rightLabel={`${selectedLead} · 25mm/s`}
+                  highlighted
+                >
+                  {waveformLoading ? (
+                    <WaveformPlaceholder height={120} />
+                  ) : segments.anomaly?.samples?.length ? (
+                    <RealEcgWaveform
+                      samples={primarySamples ? primarySamples.slice(Math.floor(segments.anomaly.start_sec * effectiveSamplingRate), Math.ceil(segments.anomaly.end_sec * effectiveSamplingRate)) : []}
+                      effectiveSamplingRate={effectiveSamplingRate}
+                      height={120}
+                      strokeColor="#FF6E7A"
+                      grid={waveformData?.grid}
+                    />
+                  ) : primarySamples ? (
+                    <RealEcgWaveform
+                      samples={primarySamples.slice(
+                        Math.floor(primarySamples.length / 3),
+                        Math.floor((primarySamples.length / 3) * 2),
+                      )}
+                      effectiveSamplingRate={effectiveSamplingRate}
+                      height={120}
+                      strokeColor="#FF6E7A"
+                    />
+                  ) : (
+                    <NoSignal />
+                  )}
+                </WaveformStrip>
+
+                {/* After */}
+                <WaveformStrip
+                  label={`After · ${segments.after ? `${segments.after.start_sec}s → ${segments.after.end_sec}s` : 'Unknown timeframe'}`}
+                  rightLabel={`${selectedLead} · 25mm/s`}
+                >
+                  {waveformLoading ? (
+                    <WaveformPlaceholder height={120} />
+                  ) : segments.after ? (
+                    segments.after.samples.length > 0 ? (
+                      <RealEcgWaveform
+                        samples={primarySamples ? primarySamples.slice(Math.floor(segments.after.start_sec * effectiveSamplingRate), Math.ceil(segments.after.end_sec * effectiveSamplingRate)) : []}
+                        effectiveSamplingRate={effectiveSamplingRate}
+                        height={120}
+                        grid={waveformData?.grid}
+                      />
+                    ) : (
+                      <NoSignal message="No post-anomaly data available." />
+                    )
+                  ) : primarySamples ? (
+                    <RealEcgWaveform
+                      samples={primarySamples.slice(Math.floor((primarySamples.length / 3) * 2))}
+                      effectiveSamplingRate={effectiveSamplingRate}
+                      height={120}
+                    />
+                  ) : (
+                    <NoSignal />
+                  )}
+                </WaveformStrip>
+
+                {/* Full recording */}
+                {hasWaveform && !waveformLoading && (
+                  <WaveformStrip
+                    label={`Full recording · ECG ${activeRecordIndex + 1} of ${totalRecords}`}
+                    rightLabel={`${selectedLead} · 25mm/s`}
+                  >
+                    <div className="overflow-x-auto scrollbar-hide">
+                      <RealEcgWaveform
+                        samples={primarySamples!}
+                        effectiveSamplingRate={effectiveSamplingRate}
+                        displaySeconds={10 * zoom}
+                        height={120}
+                        minWidth={600}
+                        grid={waveformData?.grid}
+                      />
+                    </div>
+                  </WaveformStrip>
+                )}
+
+                {!waveformLoading && !hasWaveform && (
+                  <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-elevated">
+                    <p className="text-center text-sm text-[var(--color-text-tertiary)]">
+                      No waveform signal available for this record.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── Bottom Grid ──────────────────────────────────────────────────────── */}
+            <div className="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-3">
+              
+              {/* Rhythm Summary */}
+              <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-elevated">
+                <h3 className="mb-3 font-display font-bold text-[var(--color-text-primary)]">Rhythm summary</h3>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex justify-between">
+                    <span className="text-[var(--color-text-secondary)]">Rate</span>
+                    <span className="font-display font-bold tabular text-[var(--color-text-primary)]">
+                      {analysis?.heart_rate_bpm ? `${Math.round(analysis.heart_rate_bpm)} bpm` : '—'}
+                    </span>
+                  </li>
+                  <li className="flex justify-between">
+                    <span className="text-[var(--color-text-secondary)]">QRS width</span>
+                    <span className="font-display font-bold tabular text-[var(--color-text-primary)]">
+                      {analysis?.wave_intervals?.qrs_duration_ms ? `${Math.round(analysis.wave_intervals.qrs_duration_ms)} ms` : '—'}
+                    </span>
+                  </li>
+                  <li className="flex justify-between">
+                    <span className="text-[var(--color-text-secondary)]">QT / QTc</span>
+                    <span className="font-display font-bold tabular text-[var(--color-text-primary)]">
+                      {analysis?.wave_intervals?.qt_interval_ms ? Math.round(analysis.wave_intervals.qt_interval_ms) : '—'} /{' '}
+                      {analysis?.wave_intervals?.qtc_interval_ms ? Math.round(analysis.wave_intervals.qtc_interval_ms) : '—'} ms
+                    </span>
+                  </li>
+                  <li className="flex justify-between">
+                    <span className="text-[var(--color-text-secondary)]">Axis</span>
+                    <span className="font-display font-bold tabular text-[var(--color-text-primary)]">
+                      {analysis?.rhythm ?? '—'}
+                    </span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Event Bookmarks */}
+              <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-elevated">
+                <h3 className="mb-3 font-display font-bold text-[var(--color-text-primary)]">Event bookmarks</h3>
+                <ul className="space-y-2 text-sm">
+                  {(() => {
+                    const onsetSec = segments.anomaly?.start_sec ?? null;
+                    const peakSec = onsetSec !== null && segments.anomaly?.end_sec != null
+                      ? Math.round((onsetSec + segments.anomaly.end_sec) / 2)
+                      : null;
+                    const resolSec = segments.after?.start_sec ?? segments.anomaly?.end_sec ?? null;
+
+                    const bookmarks = [
+                      { label: 'Onset', offsetSec: onsetSec },
+                      { label: 'Peak', offsetSec: peakSec },
+                      { label: 'Resolution', offsetSec: resolSec },
+                    ].filter((b) => b.offsetSec !== null);
+
+                    if (bookmarks.length === 0) {
+                      return <li className="text-[var(--color-text-tertiary)]">No bookmarks available.</li>;
+                    }
+
+                    return bookmarks.map((bm, i) => (
+                      <li key={i} className="flex items-center justify-between rounded-lg bg-[var(--color-bg-alt)] px-3 py-2 text-[var(--color-text-primary)]">
+                        <span>{bm.label} T+{bm.offsetSec}s</span>
+                        <button className="text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">
+                          jump →
+                        </button>
+                      </li>
+                    ));
+                  })()}
+                </ul>
+              </div>
+
+              {/* Annotations */}
+              <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-elevated">
+                <h3 className="mb-3 font-display font-bold text-[var(--color-text-primary)]">Annotations</h3>
+                <textarea
+                  placeholder="Add a clinician note for this strip…"
+                  value={annotation}
+                  onChange={(e) => setAnnotation(e.target.value)}
+                  className="h-28 w-full resize-none rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] p-3 text-sm text-[var(--color-text-primary)] outline-none focus:ring-2 focus:ring-[var(--color-primary)] placeholder:text-[var(--color-text-tertiary)]"
+                />
+                <button
+                  onClick={saveAnnotation}
+                  className="mt-3 w-full rounded-full bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+                >
+                  Save annotation
+                </button>
+              </div>
+
+            </div>
+          </>
+        )}
+      </div>
     </AppLayout>
   );
 };
 
-// Sub-components
+// ── Sub-components ───────────────────────────────────────────────────────────
 
 const ToolBtn = ({ icon, onClick }: { icon: IconName; onClick?: () => void }) => (
   <button
     onClick={onClick}
-    className="flex h-7 w-7 items-center justify-center rounded-full transition hover:bg-[var(--color-bg-alt)]"
+    className="grid h-8 w-8 place-items-center rounded-full text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-bg-alt)] hover:text-[var(--color-text-primary)]"
   >
-    <Icon name={icon} size={15} color="var(--color-text-primary)" />
+    <Icon name={icon} size={16} color="currentColor" />
   </button>
 );
 
@@ -591,101 +552,50 @@ const ViewToggleBtn = ({
   <button
     onClick={onClick}
     className={cn(
-      'px-3 py-1.5 text-[12px] font-semibold transition',
+      'px-4 py-1.5 text-xs font-semibold transition-all rounded-full',
       active
         ? 'bg-[var(--color-primary)] text-white'
-        : 'bg-transparent text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-alt)]',
+        : 'bg-transparent text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]',
     )}
   >
     {label}
   </button>
 );
 
-const SeverityBadge = ({ severity }: { severity: string }) => {
-  const styles: Record<string, string> = {
-    critical: 'bg-red-100 text-red-700',
-    urgent: 'bg-orange-100 text-orange-700',
-    routine: 'bg-green-100 text-green-700',
-    normal: 'bg-gray-100 text-gray-600',
-  };
-  return (
-    <span
-      className={cn(
-        'rounded-pill px-3 py-1 text-[11px] font-bold capitalize',
-        styles[severity] ?? styles.normal,
-      )}
-    >
-      {severity}
-    </span>
-  );
-};
-
 const WaveformStrip = ({
   label,
+  rightLabel,
   highlighted,
   children,
-  lead,
 }: {
   label: string;
+  rightLabel: string;
   highlighted?: boolean;
   children: ReactNode;
-  lead?: string;
 }) => (
-  <div
+  <section
     className={cn(
-      'mb-3 overflow-hidden rounded-lg',
-      highlighted && 'border border-[rgba(255,110,122,0.45)]',
+      'overflow-hidden rounded-2xl border bg-[oklch(0.13_0.025_250)]',
+      highlighted
+        ? 'border-[oklch(var(--severity-critical)/0.4)] shadow-pulse'
+        : 'border-[var(--color-border)]/20',
     )}
-    style={{ backgroundColor: '#0E1B2C' }}
   >
-    <div className="flex justify-between px-3 pt-2 pb-1">
-      <span className="text-[10px] font-bold uppercase tracking-[1.2px] text-white/70">
-        {label}
-      </span>
-      <span className="text-[10px] tracking-[1px] text-white/40">
-        {lead ?? 'II'} · 25mm/s · 10mm/mV
-      </span>
+    <div className="flex items-center justify-between px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-white/70">
+      <span>{label}</span>
+      <span className="font-mono text-white/50">{rightLabel}</span>
     </div>
-    {children}
-  </div>
+    <div className="px-2 pb-3">{children}</div>
+  </section>
 );
 
 const NoSignal = ({ message = 'No signal data' }: { message?: string }) => (
   <div className="flex h-[120px] items-center justify-center px-6 text-center">
-    <span className="text-[13px] text-white/50">{message}</span>
+    <span className="text-sm text-white/50">{message}</span>
   </div>
 );
 
-const MetricBox = ({ label, value }: { label: string; value: string }) => (
-  <div className="rounded-lg bg-[var(--color-bg-alt)] p-3">
-    <p className="mb-1 text-[10px] uppercase tracking-[1px] text-[var(--color-text-tertiary)]">
-      {label}
-    </p>
-    <p className="text-[15px] font-semibold text-[var(--color-text-primary)]">{value}</p>
-  </div>
-);
-
-const InfoRow = ({
-  label,
-  value,
-  last,
-}: {
-  label: string;
-  value: string;
-  last?: boolean;
-}) => (
-  <div
-    className={cn(
-      'flex justify-between py-2.5',
-      !last && 'border-b border-[var(--color-divider)]',
-    )}
-  >
-    <span className="text-[13px] text-[var(--color-text-secondary)]">{label}</span>
-    <span className="text-[13px] font-semibold text-[var(--color-text-primary)]">{value}</span>
-  </div>
-);
-
-// ── Case picker components ─────────────────────────────────────────────────────
+// ── Case picker components ───────────────────────────────────────────────────
 
 const SEVERITY_COLORS: Record<string, string> = {
   critical: '#E24B4A',
@@ -722,9 +632,9 @@ const CasePickerSection = ({
 }) => {
   if (cases.length === 0) return null;
   return (
-    <div className="mb-4 overflow-hidden rounded-xl border border-[var(--color-divider)] bg-[var(--color-surface)]">
-      <div className="border-b border-[var(--color-divider)] px-4 py-3">
-        <p className="text-[11px] font-semibold uppercase tracking-[1.1px] text-[var(--color-text-secondary)]">
+    <div className="mb-4 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-elevated">
+      <div className="border-b border-[var(--color-border)] px-5 py-3">
+        <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-secondary)]">
           {title}
         </p>
       </div>
@@ -733,19 +643,19 @@ const CasePickerSection = ({
           key={c.id}
           onClick={() => onSelect(c.id)}
           className={cn(
-            'flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-[var(--color-bg-alt)]',
-            i > 0 && 'border-t border-[var(--color-divider)]',
+            'flex w-full items-center gap-4 px-5 py-3.5 text-left transition hover:bg-[var(--color-bg-alt)]',
+            i > 0 && 'border-t border-[var(--color-border)]',
           )}
         >
           <span
-            className="h-2 w-2 flex-shrink-0 rounded-full"
+            className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
             style={{ backgroundColor: SEVERITY_COLORS[c.severity] ?? SEVERITY_COLORS.normal }}
           />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[14px] font-semibold text-[var(--color-text-primary)]">
+            <p className="truncate text-sm font-bold text-[var(--color-text-primary)]">
               {c.display_diagnosis}
             </p>
-            <p className="truncate text-[12px] text-[var(--color-text-secondary)]">
+            <p className="truncate text-xs text-[var(--color-text-secondary)] mt-0.5">
               {c.patient_code}
               {c.age ? ` · ${c.age}y` : ''}
               {c.sex ? ` ${c.sex}` : ''}
@@ -755,7 +665,7 @@ const CasePickerSection = ({
           </div>
           <span
             className={cn(
-              'flex-shrink-0 rounded-pill px-2.5 py-0.5 text-[10px] font-bold capitalize',
+              'flex-shrink-0 rounded-full px-3 py-1 text-xs font-bold capitalize',
               SEVERITY_BADGE[c.severity] ?? SEVERITY_BADGE.normal,
             )}
           >
@@ -767,7 +677,7 @@ const CasePickerSection = ({
         <button
           onClick={showingMore ? onLoadLess : onLoadMore}
           disabled={loadingMore}
-          className="flex w-full items-center justify-center gap-2 border-t border-[var(--color-divider)] px-4 py-3 text-[12px] font-semibold text-[var(--color-primary)] transition hover:bg-[var(--color-bg-alt)] disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-2 border-t border-[var(--color-border)] px-4 py-3 text-xs font-semibold text-[var(--color-primary)] transition hover:bg-[var(--color-bg-alt)] disabled:opacity-50"
         >
           {loadingMore ? 'Loading…' : showingMore ? 'View less' : 'View more'}
         </button>
