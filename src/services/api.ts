@@ -8,7 +8,7 @@ import type {
 } from '@/types';
 
 // CONFIG
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://10.213.128.68:8000/api/v1';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://192.168.1.172:8000/api/v1';
 
 const TOKEN_KEY = 'zayra_access';
 const REFRESH_KEY = 'zayra_refresh';

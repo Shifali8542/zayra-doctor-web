@@ -109,15 +109,10 @@ export const ClaimDetailPage = () => {
     triggerOrinn,
     isActioning,
     isAnalyzing,
-<<<<<<< HEAD
-  } = useClaim(caseIdNum, selectedRecordId);
-
-=======
     blePredictions,
     blePredictionsLoading,
- } = useClaim(caseIdNum, selectedRecordId);
- 
->>>>>>> b38e7c6 (Doctor)
+  } = useClaim(caseIdNum, selectedRecordId);
+
   // Set the initial selected record when case details load
   useEffect(() => {
     if (detail?.records && detail.records.length > 0 && !selectedRecordId) {
@@ -143,9 +138,9 @@ export const ClaimDetailPage = () => {
   // Pick best channel from waveforms dict (prefer 'II', fall back to first)
   const primarySamples = waveformQ.data?.waveforms
     ? waveformQ.data.waveforms['II'] ??
-      waveformQ.data.waveforms['ii'] ??
-      Object.values(waveformQ.data.waveforms)[0] ??
-      null
+    waveformQ.data.waveforms['ii'] ??
+    Object.values(waveformQ.data.waveforms)[0] ??
+    null
     : null;
 
   if (isLoading) {
@@ -201,7 +196,6 @@ export const ClaimDetailPage = () => {
               </p>
             </div>
 
-<<<<<<< HEAD
             {/* Action buttons */}
             <div className="flex flex-wrap gap-2">
               <button
@@ -218,47 +212,44 @@ export const ClaimDetailPage = () => {
               </button>
             </div>
           </div>
-=======
-     {/* ── BLE Live Monitoring Predictions ───────────────────────────────── */}
-      <Card className="mb-5">
-        <div className="mb-3 flex items-center justify-between">
-          <div>
-            <h2 className="text-[18px] font-bold text-[var(--color-text-primary)]">
-              BLE live monitoring
-            </h2>
-            <p className="text-[13px] text-[var(--color-text-tertiary)]">
-              MI predictions from patient's continuous BLE ECG stream
-            </p>
-          </div>
-          <span className="rounded-full bg-[var(--color-bg-alt)] px-3 py-1 text-[11px] font-bold text-[var(--color-text-secondary)]">
-            {blePredictions.length} readings
-          </span>
-        </div>
-        <BLEPredictionTable
-          predictions={blePredictions}
-          isLoading={blePredictionsLoading}
-        />
-      </Card>
 
-      {/* ── History timeline */}
-      <Card className="mb-5">
-        <h2 className="mb-4 text-[18px] font-bold text-[var(--color-text-primary)]">
-          History timeline
-        </h2>
-        {history.length === 0 ? (
-          <p className="text-[14px] text-[var(--color-text-tertiary)]">No history yet.</p>
-        ) : (
-          history.map((event, i) => (
-            <TimelineItem
-              key={i}
-              event={event}
-              isFirst={i === 0}
-              isLast={i === history.length - 1}
+          {/* ── BLE Live Monitoring Predictions ───────────────────────────────── */}
+          <div className="mb-5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-elevated md:p-6">
+            <div className="mb-3 flex items-center justify-between">
+              <div>
+                <h2 className="text-[18px] font-bold text-[var(--color-text-primary)]">
+                  BLE live monitoring
+                </h2>
+                <p className="text-[13px] text-[var(--color-text-tertiary)]">
+                  MI predictions from patient's continuous BLE ECG stream
+                </p>
+              </div>
+              <span className="rounded-full bg-[var(--color-bg-alt)] px-3 py-1 text-[11px] font-bold text-[var(--color-text-secondary)]">
+                {blePredictions.length} readings
+              </span>
+            </div>
+            <BLEPredictionTable
+              predictions={blePredictions}
+              isLoading={blePredictionsLoading}
             />
-          ))
-        )}
-      </Card>
->>>>>>> b38e7c6 (Doctor)
+          </div>
+
+          {/* ── History timeline */}
+          <div className="mb-5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-elevated md:p-6">
+            <h2 className="mb-4 text-[18px] font-bold text-[var(--color-text-primary)]">
+              History timeline
+            </h2>
+            {history.length === 0 ? (
+              <p className="text-[14px] text-[var(--color-text-tertiary)]">No history yet.</p>
+            ) : (
+              history.map((event, i) => (
+                <TimelineItem
+                  key={i}
+                  event={event}
+                />
+              ))
+            )}
+          </div>
 
           {/* Real vitals metrics grid */}
           <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -327,7 +318,7 @@ export const ClaimDetailPage = () => {
         {/* ── Main Content Grid ── */}
         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2">
-            
+
             {/* ── ECG Waveform strip ── */}
             <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-elevated md:p-6">
               <header className="mb-4 flex items-end justify-between gap-3">
@@ -473,8 +464,8 @@ export const ClaimDetailPage = () => {
           </div>
 
           <div className="space-y-6">
-            
-           {/* ── Patient context ── */}
+
+            {/* ── Patient context ── */}
             <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-elevated md:p-6">
               <header className="mb-4 flex items-end justify-between gap-3">
                 <div>
@@ -526,7 +517,7 @@ export const ClaimDetailPage = () => {
               />
             </section>
 
-           {/* ── ActionPath ── */}
+            {/* ── ActionPath ── */}
             <div className="rounded-2xl border border-border bg-aurora p-5 text-primary-foreground shadow-glow">
               <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] opacity-80">
                 ActionPath
