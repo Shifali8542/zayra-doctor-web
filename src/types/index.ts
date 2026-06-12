@@ -346,6 +346,44 @@ export interface TraceViewCase {
   heart_rate_bpm: number | null;
   created_at: string;
 }
+// BLE MI Prediction — from BLEPredictionResult model
+export interface BLEMIPrediction {
+  id: number;
+  mi_detected: boolean;
+  confidence: number;
+  prob_norm: number;
+  prob_mi: number;
+  severity: 'NORMAL' | 'WARNING' | 'CRITICAL';
+  recommendation: string;
+  model_name: string;
+  analysis_time_ms: number | null;
+  samples_used: number | null;
+  patient_context: Record<string, unknown>;
+  created_at: string;
+  ecg_record_id: number;
+  patient_code: string;
+}
+
+export interface BLEMIPredictionListResponse {
+  count: number;
+  results: BLEMIPrediction[];
+}
+
+// WebSocket MI alert pushed from ws/ecg-alerts/
+export interface WSMIAlert {
+  type: 'mi_alert' | 'connected';
+  patient_code?: string;
+  patient_id?: number;
+  ecg_record_id?: number;
+  mi_detected?: boolean;
+  confidence?: number;
+  severity?: 'NORMAL' | 'WARNING' | 'CRITICAL';
+  recommendation?: string;
+  probabilities?: { NORM: number; MI: number };
+  model_name?: string;
+  timestamp?: string;
+  message?: string;
+}
 
 // WaveformAnalysisResponse
 export interface WaveformAnalysisResponse {

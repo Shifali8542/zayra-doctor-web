@@ -5,6 +5,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { RealEcgWaveform, WaveformPlaceholder } from '@/components/Waveform';
 import { SeverityBadge } from '@/components/SeverityBadge';
 import { useClaim } from '@/hooks/useClaim';
+import { BLEPredictionTable } from '@/components/BLEMIPrediction';
 import { cn, formatRelativeTime } from '@/utils/format';
 import { useQuery } from '@tanstack/react-query';
 import { patientApi, API_ENDPOINTS } from '@/services/api';
@@ -108,8 +109,15 @@ export const ClaimDetailPage = () => {
     triggerOrinn,
     isActioning,
     isAnalyzing,
+<<<<<<< HEAD
   } = useClaim(caseIdNum, selectedRecordId);
 
+=======
+    blePredictions,
+    blePredictionsLoading,
+ } = useClaim(caseIdNum, selectedRecordId);
+ 
+>>>>>>> b38e7c6 (Doctor)
   // Set the initial selected record when case details load
   useEffect(() => {
     if (detail?.records && detail.records.length > 0 && !selectedRecordId) {
@@ -193,6 +201,7 @@ export const ClaimDetailPage = () => {
               </p>
             </div>
 
+<<<<<<< HEAD
             {/* Action buttons */}
             <div className="flex flex-wrap gap-2">
               <button
@@ -209,6 +218,47 @@ export const ClaimDetailPage = () => {
               </button>
             </div>
           </div>
+=======
+     {/* ── BLE Live Monitoring Predictions ───────────────────────────────── */}
+      <Card className="mb-5">
+        <div className="mb-3 flex items-center justify-between">
+          <div>
+            <h2 className="text-[18px] font-bold text-[var(--color-text-primary)]">
+              BLE live monitoring
+            </h2>
+            <p className="text-[13px] text-[var(--color-text-tertiary)]">
+              MI predictions from patient's continuous BLE ECG stream
+            </p>
+          </div>
+          <span className="rounded-full bg-[var(--color-bg-alt)] px-3 py-1 text-[11px] font-bold text-[var(--color-text-secondary)]">
+            {blePredictions.length} readings
+          </span>
+        </div>
+        <BLEPredictionTable
+          predictions={blePredictions}
+          isLoading={blePredictionsLoading}
+        />
+      </Card>
+
+      {/* ── History timeline */}
+      <Card className="mb-5">
+        <h2 className="mb-4 text-[18px] font-bold text-[var(--color-text-primary)]">
+          History timeline
+        </h2>
+        {history.length === 0 ? (
+          <p className="text-[14px] text-[var(--color-text-tertiary)]">No history yet.</p>
+        ) : (
+          history.map((event, i) => (
+            <TimelineItem
+              key={i}
+              event={event}
+              isFirst={i === 0}
+              isLast={i === history.length - 1}
+            />
+          ))
+        )}
+      </Card>
+>>>>>>> b38e7c6 (Doctor)
 
           {/* Real vitals metrics grid */}
           <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">

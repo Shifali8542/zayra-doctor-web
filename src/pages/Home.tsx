@@ -4,6 +4,8 @@ import { StatBadge } from '@/components/StatBadge';
 import { SectionTitle } from '@/components/SectionTitle';
 import { CaseCard } from '@/components/CaseCard';
 import { useDashboard } from '@/hooks/useDashboard';
+import { useBLEAlerts } from '@/hooks/useBLEAlerts';
+import { BLEAlertBanner } from '@/components/BLEMIPrediction';
 import { getTimeGreeting } from '@/utils/format';
 
 export const HomePage = () => {
@@ -14,9 +16,15 @@ export const HomePage = () => {
   } = useDashboard();
 
   const firstName = profile?.first_name ?? 'Doctor';
+  const { alerts, dismissAlert } = useBLEAlerts();
 
   return (
     <AppLayout>
+      {/* BLE MI Alerts — real-time WebSocket push */}
+      {alerts.map((alert, i) => (
+        <BLEAlertBanner key={i} alert={alert} onDismiss={() => dismissAlert(i)} />
+      ))}
+
       {/* Hero */}
       <section className="relative overflow-hidden rounded-3xl border border-[var(--color-border)] bg-aurora p-6 text-white shadow-elevated md:p-10">
         {/* ECG waveform: */}

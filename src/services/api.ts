@@ -28,17 +28,44 @@ async function apiFetch<T>(
   options: RequestInit = {},
 ): Promise<T> {
   const token = getAccessToken();
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers ?? {}),
-    },
-  });
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(options.headers ?? {}),
+  };
+
+  let res = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });
+
+  // Auto-refresh on 401
+  if (res.status === 401) {
+    const refresh = localStorage.getItem('zayra_refresh');
+    if (refresh) {
+      try {
+        const refreshRes = await fetch(`${API_BASE_URL}${API_ENDPOINTS.tokenRefresh}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh }),
+        });
+        if (refreshRes.ok) {
+          const data = await refreshRes.json();
+          setTokens(data.access, refresh);
+          headers['Authorization'] = `Bearer ${data.access}`;
+          res = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });
+        } else {
+          clearTokens();
+          window.location.href = '/login';
+          throw new Error('Session expired. Please log in again.');
+        }
+      } catch {
+        clearTokens();
+        window.location.href = '/login';
+        throw new Error('Session expired. Please log in again.');
+      }
+    }
+  }
+
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    // Backend returns field-level errors as { "email": ["msg"] } or { "detail": "msg" }
     const fieldError = Object.values(err)
       .flat()
       .find((v) => typeof v === 'string') as string | undefined;
@@ -48,7 +75,6 @@ async function apiFetch<T>(
   }
   return res.json() as Promise<T>;
 }
-
 // API ENDPOINTS 
 export const API_ENDPOINTS = {
   // Auth
@@ -72,6 +98,7 @@ export const API_ENDPOINTS = {
   diagnosisSummary: '/patients/summary/',
   datasetOverview: '/patients/dataset-overview/',
   myAssignments: '/assignments/me/',
+  blePredictions: (patientCode: string) => `/patients/ble-predictions/?patient_code=${patientCode}`,
 
   // Alyna
   alynaChat:    '/alyna/chat/',
@@ -305,6 +332,16 @@ export const alynaApi = {
     apiFetch<{ cleared: number }>(API_ENDPOINTS.alynaClear, {
       method: 'DELETE',
     }),
+};
+
+// BLE PREDICTIONS API
+export const bleApi = {
+  getPredictions: async (patientCode: string, limit = 10) => {
+    const qs = `patient_code=${patientCode}&limit=${limit}`;
+    return apiFetch<import('@/types').BLEMIPredictionListResponse>(
+      `/patients/ble-predictions/?${qs}`,
+    );
+  },
 };
 
 // EARNINGS API

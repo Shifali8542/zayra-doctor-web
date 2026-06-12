@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { casesApi, API_ENDPOINTS } from '@/services/api';
+import { casesApi, bleApi, API_ENDPOINTS } from '@/services/api';
 
 // caseId here = CaseReview.id (not patient id)
 export const useClaim = (caseId?: number, recordId?: number | null) => {
@@ -46,6 +46,16 @@ export const useClaim = (caseId?: number, recordId?: number | null) => {
     },
   });
 
+ const patientCode = detailQ.data?.patient?.patient_code;
+
+  const blePredictionsQ = useQuery({
+    queryKey: ['ble-predictions', patientCode],
+    queryFn: () => bleApi.getPredictions(patientCode!),
+    enabled: Boolean(patientCode),
+    staleTime: 30 * 1000,
+    refetchInterval: 30 * 1000,
+  });
+
   return {
     detail: detailQ.data ?? null,
     isLoading: detailQ.isLoading,
@@ -54,5 +64,7 @@ export const useClaim = (caseId?: number, recordId?: number | null) => {
     triggerOrinn: orinnMutation.mutate,
     isActioning: completeMutation.isPending || escalateMutation.isPending,
     isAnalyzing: orinnMutation.isPending,
+    blePredictions: blePredictionsQ.data?.results ?? [],
+    blePredictionsLoading: blePredictionsQ.isLoading,
   };
 };
